@@ -18,11 +18,15 @@ EXTRA_USERS_PARAMS = "groupadd system; \
 IMAGE_OVERHEAD_FACTOR = "1.0"
 IMAGE_ROOTFS_EXTRA_SPACE = "131072"
 
+# A set of packags to build for the package feed bu not include in rootfs.
+PACKAGE_FEED ?= ""
+
 python do_package_index () {
     from oe.rootfs import generate_index_files
     generate_index_files(d)
 }
 do_package_index[depends] += "${PACKAGEINDEXDEPS}"
+do_package_index[depends] += "${@oe.utils.build_depends_string(d.getVar('PACKAGE_FEED'), 'do_package_write_ipk')}"
 do_package_index[dirs] = "${TOPDIR}"
 do_package_index[umask] = "022"
 do_package_index[file-checksums] += "${POSTINST_INTERCEPT_CHECKSUMS}"
