@@ -1,0 +1,100 @@
+From 98ec9e6064cde85fb3630aea57bb825ff0a21ecf Mon Sep 17 00:00:00 2001
+From: MagneFire <IDaNLContact@gmail.com>
+Date: Tue, 13 Apr 2021 21:54:44 +0200
+Subject: [PATCH] Add option to refresh fbdev after drawing.
+
+---
+ psplash-fb.c | 12 ++++++++++++
+ psplash-fb.h |  3 +++
+ psplash.c    | 12 +++++++++++-
+ 3 files changed, 26 insertions(+), 1 deletion(-)
+
+diff --git a/psplash-fb.c b/psplash-fb.c
+index 6603572..66bddee 100644
+--- a/psplash-fb.c
++++ b/psplash-fb.c
+@@ -50,6 +50,17 @@ psplash_fb_flip(PSplashFB *fb, int sync)
+   }
+ }
+ 
++
++void
++psplash_fb_refresh(PSplashFB *fb)
++{
++    struct fb_var_screeninfo var;
++
++	  ioctl(fb->fd, FBIOGET_VSCREENINFO, &var);
++
++    ioctl(fb->fd, FBIOPAN_DISPLAY, &var);
++}
++
+ void
+ psplash_fb_destroy (PSplashFB *fb)
+ {
+@@ -196,6 +207,7 @@ psplash_fb_new (int angle, int fbdev_id)
+     }
+ 
+   /* Setup double virtual resolution for double buffering */
++  //fb->double_buffering = 0;
+   if (ioctl(fb->fd, FBIOPAN_DISPLAY, &fb_var) == -1) {
+     fprintf(stderr, "FBIOPAN_DISPLAY not supported, double buffering disabled");
+   } else {
+diff --git a/psplash-fb.h b/psplash-fb.h
+index 16e2b20..54bf009 100644
+--- a/psplash-fb.h
++++ b/psplash-fb.h
+@@ -94,4 +94,7 @@ psplash_fb_draw_text (PSplashFB         *fb,
+ void
+ psplash_fb_flip(PSplashFB *fb, int sync);
+ 
++void
++psplash_fb_refresh(PSplashFB *fb);
++
+ #endif
+diff --git a/psplash.c b/psplash.c
+index 1a56629..65d0f29 100644
+--- a/psplash.c
++++ b/psplash.c
+@@ -114,7 +114,7 @@ parse_command (PSplashFB *fb, char *string)
+ 
+       if (arg)
+         psplash_draw_progress (fb, atoi(arg));
+-    } 
++    }
+   else if (!strcmp(command,"MSG")) 
+     {
+       char *arg = strtok(NULL, "\0");
+@@ -222,6 +222,7 @@ main (int argc, char** argv)
+   int        pipe_fd, i = 0, angle = 0, fbdev_id = 0, ret = 0;
+   PSplashFB *fb;
+   bool       disable_console_switch = FALSE;
++  bool       fb_refresh = FALSE;
+ 
+   signal(SIGHUP, psplash_exit);
+   signal(SIGINT, psplash_exit);
+@@ -248,6 +249,12 @@ main (int argc, char** argv)
+         continue;
+       }
+ 
++    if (!strcmp(argv[i],"-r") || !strcmp(argv[i],"--fb-refresh"))
++      {
++        fb_refresh = TRUE;
++        continue;
++      }
++
+     fail:
+       fprintf(stderr, 
+               "Usage: %s [-n|--no-console-switch][-a|--angle <0|90|180|270>][-f|--fbdev <0..9>]\n", 
+@@ -335,6 +342,9 @@ main (int argc, char** argv)
+    */
+   psplash_fb_flip(fb, 1);
+ 
++  if (fb_refresh)
++    psplash_fb_refresh (fb);
++
+   psplash_main (fb, pipe_fd, 0);
+ 
+   psplash_fb_destroy (fb);
+-- 
+2.31.1
+
