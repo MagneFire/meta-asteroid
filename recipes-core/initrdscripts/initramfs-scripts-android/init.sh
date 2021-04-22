@@ -1,5 +1,7 @@
 #! /bin/sh
 
+psplash_additional=""
+
 # machine.conf should provide $sdcard_partition
 . /machine.conf
 
@@ -38,33 +40,11 @@ mount -t sysfs sys /sys
 mkdir -p /dev
 setup_devtmpfs ""
 
-# Checks wether we need to start adbd for interactive debugging
-cat /proc/cmdline | grep debug-ramdisk
-if [ $? -ne 1 ] ; then
-    mkdir -p /dev/usb-ffs/adb
-    mount -t functionfs adb /dev/usb-ffs/adb
-
-    echo 0 > /sys/class/android_usb/android0/enable
-    echo 18d1 > /sys/class/android_usb/android0/idVendor
-    echo d002 > /sys/class/android_usb/android0/idProduct
-    echo adb > /sys/class/android_usb/android0/f_ffs/aliases
-    echo ffs > /sys/class/android_usb/android0/functions
-    echo AsteroidOS > /sys/class/android_usb/android0/iManufacturer
-    echo InitRamDisk > /sys/class/android_usb/android0/iProduct
-    serial="$(cat /proc/cmdline | sed 's/.*androidboot.serialno=//' | sed 's/ .*//')"
-    echo $serial > /sys/class/android_usb/android0/iSerial
-    echo 1 > /sys/class/android_usb/android0/enable
-
-    /usr/bin/android-gadget-setup adb
-    /usr/bin/adbd
-fi
-
 rotation=0
 if [ -e /etc/rotation ]; then
     read rotation < /etc/rotation
 fi
 
-/usr/bin/psplash --angle $rotation --no-console-switch &
 
 # The sdcard partition may be the rootfs itself or contain a loop file
 info "Mounting sdcard..."
@@ -89,6 +69,7 @@ BOOT_DIR="/sdcard"
 if [ -e $ANDROID_MEDIA_DIR/asteroidos.ext4 ] ; then
     # Boots from a /sdcard/asteroidos.ext4 loop file
     info "Rootfs image found at $ANDROID_MEDIA_DIR/asteroidos.ext4; mounting it now ..."
+    /sbin/fsck.ext4 -vfp $ANDROID_MEDIA_DIR/asteroidos.ext4
     mount -o noatime,nodiratime,nodelalloc,sync,rw,loop $ANDROID_MEDIA_DIR/asteroidos.ext4 /loop
     [ $? -ne 0 ] || BOOT_DIR="/loop"
 fi
@@ -97,6 +78,43 @@ if [ -x /init.machine ]; then
     info "Run machine specific init"
     /init.machine $BOOT_DIR > /dev/ttyprintk
 fi
+
+# Checks wether we need to start adbd for interactive debugging
+cat /proc/cmdline | grep debug-ramdisk
+if [ $? -ne 1 ] ; then
+    mkdir -p /dev/usb-ffs/adb
+    mount -t functionfs adb /dev/usb-ffs/adb
+
+    echo 0 > /sys/class/android_usb/android0/enable
+    echo 18d1 > /sys/class/android_usb/android0/idVendor
+    echo d002 > /sys/class/android_usb/android0/idProduct
+    echo adb > /sys/class/android_usb/android0/f_ffs/aliases
+    echo ffs > /sys/class/android_usb/android0/functions
+    echo AsteroidOS > /sys/class/android_usb/android0/iManufacturer
+    echo InitRamDisk > /sys/class/android_usb/android0/iProduct
+    serial="$(cat /proc/cmdline | sed 's/.*androidboot.serialno=//' | sed 's/ .*//')"
+    echo $serial > /sys/class/android_usb/android0/iSerial
+    echo 1 > /sys/class/android_usb/android0/enable
+
+    /usr/bin/android-gadget-setup adb
+    /usr/bin/adbd
+fi
+
+#/usr/bin/psplash --angle $rotation --no-console-switch $psplash_additional &
+/usr/bin/psplash --angle $rotation --no-console-switch &
+PID=$!
+sleep 1
+/system/bin/surfaceflinger &
+kill -9 $PID
+#/usr/bin/msm-fb-refresher
+sleep 1
+#/usr/bin/psplash --angle $rotation --no-console-switch $psplash_additional &
+#/usr/bin/msm-fb-refresher
+#echo "PROGRESS 10" > /run/psplash_fifo
+/usr/bin/psplash --angle $rotation --no-console-switch &
+sleep 1
+/usr/bin/msm-fb-refresher
+#echo "PROGRESS 10" > /run/psplash_fifo
 
 setup_devtmpfs $BOOT_DIR
 
