@@ -1,0 +1,49 @@
+From 8a40b2c2c7741cbbc33b6bf6fb1a91f33b2fa99c Mon Sep 17 00:00:00 2001
+From: MagneFire <IDaNLContact@gmail.com>
+Date: Sat, 8 May 2021 20:38:27 +0200
+Subject: [PATCH] generate_desktop: require script for .desktop generation.
+
+---
+ cmake/AsteroidTranslations.cmake | 2 +-
+ generate-desktop.sh              | 8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/cmake/AsteroidTranslations.cmake b/cmake/AsteroidTranslations.cmake
+index 919487e..6407bdd 100644
+--- a/cmake/AsteroidTranslations.cmake
++++ b/cmake/AsteroidTranslations.cmake
+@@ -19,7 +19,7 @@ endfunction()
+ 
+ function(GENERATE_DESKTOP src_directory application_name)
+ 	find_program(generate_desktop_executable
+-		NAMES generate-desktop generate-desktop.sh)
++		NAMES generate-desktop generate-desktop.sh REQUIRED)
+ 
+ 	set(OUTPUT_DESKTOP_FILE ${CMAKE_BINARY_DIR}/${application_name}.desktop)
+ 	execute_process(
+diff --git a/generate-desktop.sh b/generate-desktop.sh
+index 96883b2..91f550d 100755
+--- a/generate-desktop.sh
++++ b/generate-desktop.sh
+@@ -42,14 +42,14 @@ if [ ! -f "${SRC_DIR}/${APPLICATION_NAME}.desktop.template" ]; then
+     echo "${SRC_DIR}/${APPLICATION_NAME}.desktop.template not found"
+     exit 2
+ fi
+-if [ ! -f "${SRC_DIR}/i18n/${APPLICATION_NAME}.h" ]; then
+-    echo "${SRC_DIR}/i18n/${APPLICATION_NAME}.h not found"
++if [ ! -f "${SRC_DIR}/i18n/${APPLICATION_NAME}.desktop.h" ]; then
++    echo "${SRC_DIR}/i18n/${APPLICATION_NAME}.desktop.h not found"
+     exit 2
+ fi
+ 
+-DEFAULT_NAME=$(grep -oP '//% "\K[^"]+(?=")' "${SRC_DIR}/i18n/${APPLICATION_NAME}.h")
++DEFAULT_NAME=$(grep -oP '//% "\K[^"]+(?=")' "${SRC_DIR}/i18n/${APPLICATION_NAME}.desktop.h")
+ if [ -z "$DEFAULT_NAME" ]; then
+-  echo "Default name can not be found in ${SRC_DIR}/i18n/${APPLICATION_NAME}.h"
++  echo "Default name can not be found in ${SRC_DIR}/i18n/${APPLICATION_NAME}.desktop.h"
+   exit 3
+ fi
+ 
+-- 
+2.31.1
+

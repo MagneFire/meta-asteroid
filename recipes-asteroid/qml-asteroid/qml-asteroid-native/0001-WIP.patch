@@ -1,0 +1,70 @@
+From 2db4f22e1cc8de600bd57486e2bcdd60dc3dace8 Mon Sep 17 00:00:00 2001
+From: MagneFire <IDaNLContact@gmail.com>
+Date: Sat, 8 May 2021 22:17:45 +0200
+Subject: [PATCH] WIP
+
+---
+ cmake/AsteroidTranslations.cmake |  2 +-
+ generate-desktop.sh              | 12 ++++++------
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/cmake/AsteroidTranslations.cmake b/cmake/AsteroidTranslations.cmake
+index 794b4c4..4391495 100644
+--- a/cmake/AsteroidTranslations.cmake
++++ b/cmake/AsteroidTranslations.cmake
+@@ -23,7 +23,7 @@ function(GENERATE_DESKTOP src_directory application_name)
+ 
+ 	set(OUTPUT_DESKTOP_FILE ${CMAKE_BINARY_DIR}/${application_name}.desktop)
+ 	execute_process(
+-		COMMAND ${generate_desktop_executable} ${src_directory} ${application_name} ${OUTPUT_DESKTOP_FILE}
++		COMMAND /usr/bin/bash ${generate_desktop_executable} ${src_directory} ${application_name} ${OUTPUT_DESKTOP_FILE}
+ 		OUTPUT_FILE ${OUTPUT_DESKTOP_FILE})
+ 
+ 	install(FILES ${CMAKE_BINARY_DIR}/${application_name}.desktop
+diff --git a/generate-desktop.sh b/generate-desktop.sh
+index 91f550d..7699492 100755
+--- a/generate-desktop.sh
++++ b/generate-desktop.sh
+@@ -57,33 +57,33 @@ cat "${SRC_DIR}/${APPLICATION_NAME}.desktop.template" > "$OUTPUT_FILE"
+ echo "Name=$DEFAULT_NAME" >> "$OUTPUT_FILE"
+ 
+ for FILE in "${SRC_DIR}"/i18n/*.ts; do
+-  echo "Processing $FILE..."
++  #echo "Processing $FILE..."
+ 
+   PROCESSED_LANG=$(grep -oP 'language="\K[^"]+(?=")' "$FILE")
+   if [ -z "$PROCESSED_LANG" ]; then
+     echo "> Couldn't find a corresponding language id, aborting"
+     continue
+   fi
+-  echo "> Language: $PROCESSED_LANG detected"
++  #echo "> Language: $PROCESSED_LANG detected"
+ 
+   TRANSLATION_LINE=$(grep -A 3 '<message id=\"id-app-launcher-name\">' "$FILE" | grep '<translation')
+   if [ -z "$TRANSLATION_LINE" ]; then
+-    echo "> Couldn't find a corresponding desktop.h translation, aborting"
++    #echo "> Couldn't find a corresponding desktop.h translation, aborting"
+     continue
+   fi
+ 
+   LINE_IS_UNFINISHED=$(echo "$TRANSLATION_LINE" | grep unfinished)
+   if [ -n "$LINE_IS_UNFINISHED" ]; then
+-    echo "> Translation line has been found but is marked as unfinished, aborting"
++    #echo "> Translation line has been found but is marked as unfinished, aborting"
+     continue
+   fi
+ 
+   TRANSLATED_NAME=$(echo "$TRANSLATION_LINE" | grep -oP '>\K[^<]*(?=</translation>)')
+   if [ -z "$TRANSLATED_NAME" ]; then
+-    echo "> Translation is empty, aborting"
++    #echo "> Translation is empty, aborting"
+     continue
+   fi
+-  echo "> Translation '$TRANSLATED_NAME' found, filling $OUTPUT_FILE"
++  #echo "> Translation '$TRANSLATED_NAME' found, filling $OUTPUT_FILE"
+ 
+   echo "Name[$PROCESSED_LANG]=$TRANSLATED_NAME" >> "$OUTPUT_FILE"
+ done
+-- 
+2.31.1
+

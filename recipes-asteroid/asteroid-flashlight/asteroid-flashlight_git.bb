@@ -3,12 +3,17 @@ HOMEPAGE = "https://github.com/AsteroidOS/asteroid-flashlight.git"
 LICENSE = "GPLv3"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=84dcc94da3adb52b53ae4fa38fe49e5d"
 
-SRC_URI = "git://github.com/AsteroidOS/asteroid-flashlight.git;protocol=https"
+SRC_URI = "git://github.com/PureTryOut/asteroid-flashlight.git;branch=cmake;protocol=https"
 SRCREV = "${AUTOREV}"
 PR = "r1"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
-inherit qmake5
+#inherit qmake5
+inherit cmake_qt5
 
 DEPENDS += "qml-asteroid qttools-native qtdeclarative-native"
-FILES_${PN} += "/usr/share/translations/"
+
+do_install_append() {
+    # This app only uses translations for the desktop shortcut.
+    rm -rvf ${D}/usr/share/translations/
+}
