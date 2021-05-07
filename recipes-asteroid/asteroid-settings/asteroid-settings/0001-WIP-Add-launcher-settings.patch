@@ -1,0 +1,3754 @@
+From 8529c6aa5d6cc5f8d2017371d6ecce9d31791d41 Mon Sep 17 00:00:00 2001
+From: MagneFire <IDaNLContact@gmail.com>
+Date: Fri, 16 Apr 2021 16:01:34 +0200
+Subject: [PATCH] WIP: Add launcher settings
+
+---
+ LauncherItemDelegate.qml          |  72 +++++++++++
+ LauncherPage.qml                  | 203 ++++++++++++++++++++++++++++++
+ asteroid-settings.pro             |   1 +
+ i18n/asteroid-settings.ca.ts      |   4 +
+ i18n/asteroid-settings.cs.ts      |   4 +
+ i18n/asteroid-settings.da.ts      |  31 +++--
+ i18n/asteroid-settings.de_DE.ts   |  31 +++--
+ i18n/asteroid-settings.el.ts      |   4 +
+ i18n/asteroid-settings.en_GB.ts   |  31 +++--
+ i18n/asteroid-settings.es.ts      |  35 +++---
+ i18n/asteroid-settings.es_AR.ts   |  31 +++--
+ i18n/asteroid-settings.fa.ts      |  31 +++--
+ i18n/asteroid-settings.fi.ts      |  31 +++--
+ i18n/asteroid-settings.fr.ts      |  31 +++--
+ i18n/asteroid-settings.gl.ts      |  31 +++--
+ i18n/asteroid-settings.he.ts      |  31 +++--
+ i18n/asteroid-settings.hr.ts      |  31 +++--
+ i18n/asteroid-settings.hu.ts      |   4 +
+ i18n/asteroid-settings.id.ts      |  31 +++--
+ i18n/asteroid-settings.it.ts      |   4 +
+ i18n/asteroid-settings.ja.ts      |  31 +++--
+ i18n/asteroid-settings.ka.ts      |  31 +++--
+ i18n/asteroid-settings.ko.ts      |  31 +++--
+ i18n/asteroid-settings.lb.ts      |  31 +++--
+ i18n/asteroid-settings.mr.ts      |  31 +++--
+ i18n/asteroid-settings.ms.ts      |  31 +++--
+ i18n/asteroid-settings.nb_NO.ts   |  41 +++---
+ i18n/asteroid-settings.nl_BE.ts   |  31 +++--
+ i18n/asteroid-settings.nl_NL.ts   |  31 +++--
+ i18n/asteroid-settings.pl.ts      |  31 +++--
+ i18n/asteroid-settings.pt.ts      |  31 +++--
+ i18n/asteroid-settings.pt_BR.ts   |  31 +++--
+ i18n/asteroid-settings.pt_PT.ts   |  31 +++--
+ i18n/asteroid-settings.ro.ts      |  31 +++--
+ i18n/asteroid-settings.ru.ts      |  31 +++--
+ i18n/asteroid-settings.sk.ts      |   4 +
+ i18n/asteroid-settings.sv.ts      |  31 +++--
+ i18n/asteroid-settings.ta.ts      |   4 +
+ i18n/asteroid-settings.te.ts      |  31 +++--
+ i18n/asteroid-settings.th.ts      |  31 +++--
+ i18n/asteroid-settings.tr.ts      |   4 +
+ i18n/asteroid-settings.uk.ts      |  31 +++--
+ i18n/asteroid-settings.zh_Hans.ts |   4 +
+ i18n/asteroid-settings.zh_Hant.ts |  31 +++--
+ images/diskBackground.svg         |  14 +++
+ images/diskBackgroundPressed.svg  |  14 +++
+ main.qml                          |   9 +-
+ resources.qrc                     |   8 ++
+ 48 files changed, 934 insertions(+), 429 deletions(-)
+ create mode 100644 LauncherItemDelegate.qml
+ create mode 100644 LauncherPage.qml
+ create mode 100644 images/diskBackground.svg
+ create mode 100644 images/diskBackgroundPressed.svg
+
+diff --git a/LauncherItemDelegate.qml b/LauncherItemDelegate.qml
+new file mode 100644
+index 0000000..6bbb289
+--- /dev/null
++++ b/LauncherItemDelegate.qml
+@@ -0,0 +1,72 @@
++/*
++ * Copyright (C) 2015 Florent Revest <revestflo@gmail.com>
++ *               2014 Aleksi Suomalainen <suomalainen.aleksi@gmail.com>
++ *               2013 Jolla Ltd <robin.burchell@jollamobile.com>
++ *               2012 Timur Kristóf <venemo@fedoraproject.org>
++ *               2011 Tom Swindell <t.swindell@rubyx.co.uk>
++ * All rights reserved.
++ *
++ * You may use this file under the terms of BSD license as follows:
++ *
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions are met:
++ *     * Redistributions of source code must retain the above copyright
++ *       notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright
++ *       notice, this list of conditions and the following disclaimer in the
++ *       documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the author nor the
++ *       names of its contributors may be used to endorse or promote products
++ *       derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
++ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
++ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
++ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR
++ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
++ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
++ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
++ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
++ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++import QtQuick 2.9
++import org.nemomobile.lipstick 0.1
++import org.asteroid.controls 1.0
++
++MouseArea {
++    id: launcherItem
++    property alias iconName: icon.name
++    property alias iconCaption: iconText.text
++
++    onClicked: model.object.launchApplication()
++
++    Image {
++        anchors.fill: parent
++        source: launcherItem.pressed | fakePressed ? "qrc:/images/diskBackgroundPressed.svg" : "qrc:/images/diskBackground.svg"
++        sourceSize.width: width
++        sourceSize.height: height
++    }
++
++    Icon {
++        id: icon
++        anchors.centerIn: parent
++        anchors.verticalCenterOffset: -Dims.h(3)
++        width: parent.width * 0.31
++        height: width
++        color: "#666666"
++    }
++
++    Label {
++        id: iconText
++        anchors.top: icon.bottom
++        width: parent.width * 0.5
++        horizontalAlignment: Text.AlignHCenter
++        anchors.topMargin: Dims.h(4)
++        anchors.horizontalCenter: parent.horizontalCenter
++        color: "#666666"
++        font.pixelSize: Dims.l(5)
++        font.weight: Font.Medium
++    }
++}
+diff --git a/LauncherPage.qml b/LauncherPage.qml
+new file mode 100644
+index 0000000..920614a
+--- /dev/null
++++ b/LauncherPage.qml
+@@ -0,0 +1,203 @@
++/*
++ * Copyright (C) 2015 - Florent Revest <revestflo@gmail.com>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++
++import QtQuick 2.9
++import Qt.labs.folderlistmodel 2.1
++import Nemo.Time 1.0
++import Nemo.Configuration 1.0
++import org.asteroid.controls 1.0
++import QtQml.Models 2.15
++
++Item {
++    property alias displayAmbient: compositor.displayAmbient
++    property bool fakePressed:     false
++    property bool toTopAllowed:    false
++    property bool toBottomAllowed: false
++    property bool toLeftAllowed:   false
++    property bool toRightAllowed:  false
++    property bool forbidTop:       false
++    property bool forbidBottom:    false
++    property bool forbidLeft:      false
++    property bool forbidRight:     false
++    property var launcherCenterColor: alb.centerColor("")
++    property var launcherOuterColor: alb.outerColor("")
++    property int activeLauncher: 0
++
++    ConfigurationValue {
++        id: appLauncherSource
++        key: "/desktop/asteroid/applauncher"
++        defaultValue: "file:///usr/share/asteroid-launcher/applauncher/000-default-horizontal.qml"
++    }
++
++    GridView {
++        id: grid
++        cellWidth: Dims.w(50)
++        cellHeight: Dims.h(40)
++        anchors.fill: parent
++
++        model: FolderListModel {
++            id: folderModel
++            folder: "file:///usr/share/asteroid-launcher/applauncher"
++            nameFilters: ["*.qml"]
++            onCountChanged: {
++                var i = 0
++                while (i < folderModel.count){
++                    var fileName = folderModel.get(i, "fileName")
++                    if(appLauncherSource.value == folderModel.folder + "/" + fileName)
++                        grid.positionViewAtIndex(i, GridView.Center)
++
++                    i = i+1
++                }
++            }
++        }
++
++
++        Item {
++            id: burnInProtectionManager
++            property int leftOffset
++            property int rightOffset
++            property int topOffset
++            property int bottomOffset
++            property int widthOffset
++            property int heightOffset
++        }
++
++        QtObject {
++            id: alb
++            function outerColor(path) {
++                return "#000000";
++            }
++            function centerColor(path) {
++                return "#888888";
++            }
++        }
++
++        ListModel {
++            id: launcherModel
++            Component.onCompleted: {
++                append({object: {title: "Agenda", iconId: "ios-calendar-outline"}});
++                append({object: {title: "Alarm Clock", iconId: "ios-alarm-outline"}});
++                append({object: {title: "Calculator", iconId: "ios-calculator-outline"}});
++                append({object: {title: "Compass", iconId: "ios-compass-outline"}});
++                append({object: {title: "Flashlight", iconId: "ios-bulb-outline"}});
++                append({object: {title: "Music", iconId: "ios-musical-notes-outline"}});
++                append({object: {title: "Settings", iconId: "ios-settings-outline"}});
++                append({object: {title: "Stopwatch", iconId: "ios-stopwatch-outline"}});
++                append({object: {title: "Timer", iconId: "ios-timer-outline"}});
++                append({object: {title: "Weather", iconId: "ios-cloudy-outline"}});
++            }
++        }
++
++        QtObject {
++            id: compositor
++            property bool displayAmbient: false
++        }
++
++        QtObject {
++            id: rightIndicator
++            function animate() {}
++        }
++        QtObject {
++            id: leftIndicator
++            function animate() {}
++        }
++        QtObject {
++            id: topIndicator
++            function animate() {}
++        }
++        QtObject {
++            id: bottomIndicator
++            function animate() {}
++        }
++
++        WallClock {
++            id: wallClock
++            enabled: true
++            updateFrequency: WallClock.Minute
++        }
++
++        QtObject {
++            id: localeManager
++            property string changesObserver: ""
++        }
++
++        delegate: Component {
++            id: fileDelegate
++            Item {
++                width: grid.cellWidth
++                height: grid.cellHeight
++                Loader {
++                    id: preview
++                    anchors.centerIn: parent
++                    width: Math.min(grid.cellWidth, grid.cellHeight)
++                    height: Math.min(grid.cellWidth, grid.cellHeight)
++                    source: folderModel.folder + "/" + fileName
++                    asynchronous: true
++                }
++
++
++                Connections {
++                    target: preview.item
++                    function onAtXEndChanged() {
++                        if (preview.item.currentIndex > 0) {
++                            preview.item.currentIndex = 0;
++                        }
++                    }
++                    function onAtYEndChanged() {
++                        if (preview.item.currentIndex > 0) {
++                            preview.item.currentIndex = 0;
++                        }
++                    }
++                }
++                Timer {
++                    interval: 3000
++                    triggeredOnStart: true
++                    running: preview.status == Loader.Ready && (activeLauncher == index || preview.item.currentIndex > 0)
++                    repeat: true
++                    onTriggered: {
++                        if (preview.item.currentIndex == 0) {
++                            preview.item.currentIndex = preview.item.count - 1;
++                            activeLauncher ++;
++                            if (activeLauncher == folderModel.count) {
++                                activeLauncher = 0;
++                            }
++                        }
++                    }
++                }
++                MouseArea {
++                    anchors.fill: parent
++                    onClicked: appLauncherSource.value = folderModel.folder + "/" + fileName
++                }
++
++                Rectangle {
++                    anchors.fill: parent
++                    color: "black"
++                    opacity: 0.4
++                    visible: appLauncherSource.value == folderModel.folder + "/" + fileName
++                }
++                Icon {
++                    name: "ios-checkmark-circle"
++                    anchors.bottom: parent.bottom
++                    anchors.right: parent.right
++                    height: width
++                    width: parent.width*0.3
++                    visible: appLauncherSource.value == folderModel.folder + "/" + fileName
++                }
++            }
++        }
++    }
++}
+diff --git a/asteroid-settings.pro b/asteroid-settings.pro
+index 5fb3c42..2af11d5 100644
+--- a/asteroid-settings.pro
++++ b/asteroid-settings.pro
+@@ -19,6 +19,7 @@ OTHER_FILES += main.qml \
+                UnitsPage.qml \
+                USBPage.qml \
+                WatchfacePage.qml \
++               LauncherPage.qml \
+                PoweroffPage.qml \
+                RebootPage.qml \
+                RestartPage.qml \
+diff --git a/i18n/asteroid-settings.ca.ts b/i18n/asteroid-settings.ca.ts
+index 256e0c4..07915ee 100644
+--- a/i18n/asteroid-settings.ca.ts
++++ b/i18n/asteroid-settings.ca.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation type="unfinished"></translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.cs.ts b/i18n/asteroid-settings.cs.ts
+index 80a7973..8180ec3 100644
+--- a/i18n/asteroid-settings.cs.ts
++++ b/i18n/asteroid-settings.cs.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>Probuzení klepnutím</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.da.ts b/i18n/asteroid-settings.da.ts
+index dfb75e7..6412616 100644
+--- a/i18n/asteroid-settings.da.ts
++++ b/i18n/asteroid-settings.da.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Tidspunkt</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Dato</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Sprog</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation type="unfinished"></translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Lyd</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Enheder</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Baggrund</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Udseende på ur</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Sluk</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Genstart</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Om</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.de_DE.ts b/i18n/asteroid-settings.de_DE.ts
+index d96c346..d143beb 100644
+--- a/i18n/asteroid-settings.de_DE.ts
++++ b/i18n/asteroid-settings.de_DE.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Uhrzeit</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Datum</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Sprache</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Bildschirm</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tippen zum Aufwachen</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Ton</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Einheiten</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Hintergrundbild</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Ziffernblatt</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Ausschalten</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Neustart</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Über</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.el.ts b/i18n/asteroid-settings.el.ts
+index 17f1ac7..fbe793a 100644
+--- a/i18n/asteroid-settings.el.ts
++++ b/i18n/asteroid-settings.el.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>Ενεργοποίηση με πάτημα</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.en_GB.ts b/i18n/asteroid-settings.en_GB.ts
+index abfc05c..6eb9ccd 100644
+--- a/i18n/asteroid-settings.en_GB.ts
++++ b/i18n/asteroid-settings.en_GB.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Time</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Date</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Language</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Display</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tap-to-wake</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Sound</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Units</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Wallpaper</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Watchface</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation>Launcher</translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Power Off</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reboot</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>About</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.es.ts b/i18n/asteroid-settings.es.ts
+index 7a99c1e..eacaeaa 100644
+--- a/i18n/asteroid-settings.es.ts
++++ b/i18n/asteroid-settings.es.ts
+@@ -36,7 +36,7 @@
+     <message id="id-sound-percentage">
+         <location filename="../SoundPage.qml" line="36"/>
+         <source>Volume %1%</source>
+-        <translation>Volumen %1 %</translation>
++        <translation>Volumen %1&#xa0;%</translation>
+     </message>
+     <message id="id-charging-only">
+         <location filename="../USBPage.qml" line="35"/>
+@@ -61,7 +61,7 @@
+     <message id="id-12h-format">
+         <location filename="../UnitsPage.qml" line="48"/>
+         <source>Use 12H format:</source>
+-        <translation>Usar formato 12 h:</translation>
++        <translation>Usar formato 12&#xa0;h:</translation>
+     </message>
+     <message id="id-fahrenheit">
+         <location filename="../UnitsPage.qml" line="63"/>
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Hora</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Fecha</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Idioma</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Pantalla</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tocar para encender</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Sonido</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unidades</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Fondo</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Esfera</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Apagar</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reiniciar</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Acerca de</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.es_AR.ts b/i18n/asteroid-settings.es_AR.ts
+index 8117ea0..4252dd4 100644
+--- a/i18n/asteroid-settings.es_AR.ts
++++ b/i18n/asteroid-settings.es_AR.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Hora</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Fecha</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Idioma</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation></translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation type="unfinished"></translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Sonido</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unidades</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Fondo</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Carátula</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation></translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Apagar</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reiniciar</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Acerca de</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.fa.ts b/i18n/asteroid-settings.fa.ts
+index 0a3f1fd..8c7f76b 100644
+--- a/i18n/asteroid-settings.fa.ts
++++ b/i18n/asteroid-settings.fa.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>زمان</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>تاریخ</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>زبان</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>بلوتوث</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>صفحهٔ نمایش</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>ضربه برای بیداری</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>صدا</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>واحدها</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>کاغذدیواری</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>صفحهٔ ساعت</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>یواِس‌بی</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>خاموش</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>راه‌اندازی دوباره</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>درباره</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.fi.ts b/i18n/asteroid-settings.fi.ts
+index e4dad9f..4f597e4 100644
+--- a/i18n/asteroid-settings.fi.ts
++++ b/i18n/asteroid-settings.fi.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Aika</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Päiväys</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Kieli</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Näyttö</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Napauta herättääksesi puhelin</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Ääni</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Yksiköt</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Taustakuva</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Kellotaulu</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Sammuta</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Käynnistä uudelleen</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Tietoa</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.fr.ts b/i18n/asteroid-settings.fr.ts
+index cf57f71..bac6cc2 100644
+--- a/i18n/asteroid-settings.fr.ts
++++ b/i18n/asteroid-settings.fr.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Heure</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Date</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Langue</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Afficher</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tapoter-pour-réveiller</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Son</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unités</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Fond d&apos;écran</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Cadrans</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Éteindre</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Redémarrer</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>À propos</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.gl.ts b/i18n/asteroid-settings.gl.ts
+index 6736b33..a550d98 100644
+--- a/i18n/asteroid-settings.gl.ts
++++ b/i18n/asteroid-settings.gl.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Hora</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Data</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Lingua</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Pantalla</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tocar para despertar</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Son</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unidades</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Imaxe do fondo</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Esfera do reloxo</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Apagar</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reiniciar</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Acerca de</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.he.ts b/i18n/asteroid-settings.he.ts
+index 40eb18d..70ec86a 100644
+--- a/i18n/asteroid-settings.he.ts
++++ b/i18n/asteroid-settings.he.ts
+@@ -71,30 +71,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>שעה</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>תאריך</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>שפה</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>תצוגה</translation>
+     </message>
+@@ -119,44 +119,49 @@
+         <translation>לגעת כדי להעיר</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>צליל</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>יחידות</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>תמונת רקע</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>פני השעון</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>כיבוי</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>הפעלה מחדש</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>על אודות</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.hr.ts b/i18n/asteroid-settings.hr.ts
+index 8a390df..fb23c24 100644
+--- a/i18n/asteroid-settings.hr.ts
++++ b/i18n/asteroid-settings.hr.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Vrijeme</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Datum</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Jezik</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation></translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Ekran</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Dodirni-za-buđenje</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Zvuk</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Mjerne jedinice</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Pozadina</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Pozadina sata</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation></translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Isključi</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Ponovo pokreni</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Informacije</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.hu.ts b/i18n/asteroid-settings.hu.ts
+index 5221323..0260cb7 100644
+--- a/i18n/asteroid-settings.hu.ts
++++ b/i18n/asteroid-settings.hu.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation type="unfinished"></translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.id.ts b/i18n/asteroid-settings.id.ts
+index e435ab5..a417e23 100644
+--- a/i18n/asteroid-settings.id.ts
++++ b/i18n/asteroid-settings.id.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Waktu</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Tanggal</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Bahasa</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Layar</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Ketuk untuk membangunkan</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Suara</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unit</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Gambar latar</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Watchface</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Matikan</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Nyalakan Ulang</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Tentang</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.it.ts b/i18n/asteroid-settings.it.ts
+index df89464..b50e1ae 100644
+--- a/i18n/asteroid-settings.it.ts
++++ b/i18n/asteroid-settings.it.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>Tocca-per-riattivare</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.ja.ts b/i18n/asteroid-settings.ja.ts
+index a20cb13..7ecc7ab 100644
+--- a/i18n/asteroid-settings.ja.ts
++++ b/i18n/asteroid-settings.ja.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>時間</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>日付</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>言語</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation type="unfinished"></translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>サウンド</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>単位</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>壁紙</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>ウォッチフェイス</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>電源を切る</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>再起動</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>情報</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.ka.ts b/i18n/asteroid-settings.ka.ts
+index c1f87a0..c65b236 100644
+--- a/i18n/asteroid-settings.ka.ts
++++ b/i18n/asteroid-settings.ka.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>დრო</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>თარიღი</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>ენა</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>ბლუთუზი</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation type="unfinished"></translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>ხმა</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>ერთეულები</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>ფონი</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>მაჯისსაათის სახე</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>კვების გამორთვა</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>გადატვირთვა</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>AsteroidOS შესახებ</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.ko.ts b/i18n/asteroid-settings.ko.ts
+index ca6faa3..d4670d9 100644
+--- a/i18n/asteroid-settings.ko.ts
++++ b/i18n/asteroid-settings.ko.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>시간</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>날짜</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>언어</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>블루투스</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>화면</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>탭할 때 화면 켜기</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>소리</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>단위</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>배경화면</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>시계화면</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>종료</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>재시동</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>정보</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.lb.ts b/i18n/asteroid-settings.lb.ts
+index eec33cd..d600405 100644
+--- a/i18n/asteroid-settings.lb.ts
++++ b/i18n/asteroid-settings.lb.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Auerzäit</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Datum</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Sprooch</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation></translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation type="unfinished"></translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation></translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unitéiten</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Hannergrond</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Zifferblat</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation></translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Ausschalten</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Neistart</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Iwwer</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.mr.ts b/i18n/asteroid-settings.mr.ts
+index 9546bdd..ea94be9 100644
+--- a/i18n/asteroid-settings.mr.ts
++++ b/i18n/asteroid-settings.mr.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>वेळ</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>दिनांक</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>भाषा</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>ब्लूटुथ</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>प्रदर्शन</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>टॅप टू वेक</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>आवाज</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>युनिट</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>वॉलपेपर</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>वॉचफेस</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>युएसबी</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>वीज बंद</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>रीबूट करा</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>बद्दल</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.ms.ts b/i18n/asteroid-settings.ms.ts
+index 956f9d2..ba6875e 100644
+--- a/i18n/asteroid-settings.ms.ts
++++ b/i18n/asteroid-settings.ms.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Masa</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Tarikh</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Bahasa</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation></translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Paparan</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Ketik untuk bangun</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Bunyi</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unit</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Paparan</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Muka jam</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation></translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Tutup Kuasa</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Mulakan Semula</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Mengenai</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.nb_NO.ts b/i18n/asteroid-settings.nb_NO.ts
+index 0008398..c6d74da 100644
+--- a/i18n/asteroid-settings.nb_NO.ts
++++ b/i18n/asteroid-settings.nb_NO.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>TId</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Dato</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Språk</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Blåtann</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation type="unfinished">Skjerm</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished">Trykk for å vekke</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Lyd</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Enheter</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Bakgrunn</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Klokkeskive</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Skru av</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Omstart</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Om</translation>
+     </message>
+@@ -164,15 +169,5 @@
+         <source>Settings</source>
+         <translation>Innstillinger</translation>
+     </message>
+-    <message id="id-tilt-to-wake-on">
+-        <location filename="../TiltToWakePage.qml" line="29"/>
+-        <source>Tilt-to-wake on</source>
+-        <translation>Skakke-vekking på</translation>
+-    </message>
+-    <message id="id-tilt-to-wake-off">
+-        <location filename="../TiltToWakePage.qml" line="31"/>
+-        <source>Tilt-to-wake off</source>
+-        <translation>Skakke-vekking av</translation>
+-    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.nl_BE.ts b/i18n/asteroid-settings.nl_BE.ts
+index b7f6253..3ed6e8c 100644
+--- a/i18n/asteroid-settings.nl_BE.ts
++++ b/i18n/asteroid-settings.nl_BE.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Tijd</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Datum</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Taal</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Scherm</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Drukken om te ontwaken</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Geluid</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Eenheden</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Achtergrond</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Horlogestijl</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Uitschakelen</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Herstarten</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Over</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.nl_NL.ts b/i18n/asteroid-settings.nl_NL.ts
+index bde2b1f..15703e5 100644
+--- a/i18n/asteroid-settings.nl_NL.ts
++++ b/i18n/asteroid-settings.nl_NL.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Tijd</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Datum</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Taal</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Scherm</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Drukken om te ontwaken</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Geluid</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Eenheden</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Achtergrond</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Horlogestijl</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Uitschakelen</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Herstarten</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Over</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.pl.ts b/i18n/asteroid-settings.pl.ts
+index e82dc9f..37096c6 100644
+--- a/i18n/asteroid-settings.pl.ts
++++ b/i18n/asteroid-settings.pl.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Czas</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Data</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Język</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Wystawa</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Dotknij, aby wybudzić</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Dźwięk</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Jednostki</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Tapeta</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Wygląd zegarka</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Wyłącz</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Uruchom ponownie</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>O urządzeniu</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.pt.ts b/i18n/asteroid-settings.pt.ts
+index 891b72c..e804c69 100644
+--- a/i18n/asteroid-settings.pt.ts
++++ b/i18n/asteroid-settings.pt.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Hora</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Data</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Idioma</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Ecrã</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tocar para acordar</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Som</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unidades</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Imagem de fundo</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Mostrador</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Desligar</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reiniciar</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Sobre</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.pt_BR.ts b/i18n/asteroid-settings.pt_BR.ts
+index 37bf680..392c8b4 100644
+--- a/i18n/asteroid-settings.pt_BR.ts
++++ b/i18n/asteroid-settings.pt_BR.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Hora</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Data</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Idioma</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Tela</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tocar para acordar</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Som</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unidades</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Papel de parede</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Mostrador</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Desligar</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reiniciar</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Sobre</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.pt_PT.ts b/i18n/asteroid-settings.pt_PT.ts
+index 8742e59..a310113 100644
+--- a/i18n/asteroid-settings.pt_PT.ts
++++ b/i18n/asteroid-settings.pt_PT.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Hora</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Data</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Idioma</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Ecrã</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Tocar para acordar</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Som</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unidades</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Imagem de fundo</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Mostrador</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Desligar</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Reiniciar</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Sobre</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.ro.ts b/i18n/asteroid-settings.ro.ts
+index 47ba1f4..e5d716b 100644
+--- a/i18n/asteroid-settings.ro.ts
++++ b/i18n/asteroid-settings.ro.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Timp</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Dată</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Limbă</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Ecran</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Atingeți pentru a trezi</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Sunet</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Unităţi</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Imagine fundal</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Faţă ceas</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Oprire</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Repornire</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Despre</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.ru.ts b/i18n/asteroid-settings.ru.ts
+index ebabfc5..c76db6c 100644
+--- a/i18n/asteroid-settings.ru.ts
++++ b/i18n/asteroid-settings.ru.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Время</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Дата</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Язык</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Дисплей</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Пробуждение по касанию</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Звук</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Единицы</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Обои</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Циферблат</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Выключить</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Перезагрузить</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>О продукте</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.sk.ts b/i18n/asteroid-settings.sk.ts
+index f48f258..7bd263b 100644
+--- a/i18n/asteroid-settings.sk.ts
++++ b/i18n/asteroid-settings.sk.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>Prebudenie klepnutím</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.sv.ts b/i18n/asteroid-settings.sv.ts
+index 977f48a..2f4fd55 100644
+--- a/i18n/asteroid-settings.sv.ts
++++ b/i18n/asteroid-settings.sv.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Tid</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Datum</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>Språk</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Skärm</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>Ljud</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>Enheter</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Bakgrundsbild</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Klockansikte</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Stäng av</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Starta om</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Om</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.ta.ts b/i18n/asteroid-settings.ta.ts
+index db8877b..c35f122 100644
+--- a/i18n/asteroid-settings.ta.ts
++++ b/i18n/asteroid-settings.ta.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>எழுந்திரு என்பதைத் தட்டவும்</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.te.ts b/i18n/asteroid-settings.te.ts
+index 2a43ac9..f8055dc 100644
+--- a/i18n/asteroid-settings.te.ts
++++ b/i18n/asteroid-settings.te.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>సమయం</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>తేది</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>భాష</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>బ్లూటూత్</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>ప్రదర్శన</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>మేల్కొలపడానికి నొక్కండి</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>శబ్దం</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>యూనిట్స్</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>వాల్పేపర్</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>గడియారముఖం</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>యుఎస్బి</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>మూసివేయి</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>రీబూట్</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>గురించి</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.th.ts b/i18n/asteroid-settings.th.ts
+index f04ffe0..4ab50bf 100644
+--- a/i18n/asteroid-settings.th.ts
++++ b/i18n/asteroid-settings.th.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>เวลา</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>วันเดือนปี</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>ภาษา</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>บลูทูธ</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>แสดงผล</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>แตะเพื่อปลุก</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>เสียง</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>หน่วย</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>วอลเปเปอร์</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>หน้าปัด</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>ปิด</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>รีบูต</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>เกี่ยวกับ</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.tr.ts b/i18n/asteroid-settings.tr.ts
+index bfeeae4..9a5e56c 100644
+--- a/i18n/asteroid-settings.tr.ts
++++ b/i18n/asteroid-settings.tr.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>Dokunarak uyandır</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.uk.ts b/i18n/asteroid-settings.uk.ts
+index 330c382..1554add 100644
+--- a/i18n/asteroid-settings.uk.ts
++++ b/i18n/asteroid-settings.uk.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>Час</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>Дата</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>мова</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>Bluetooth</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>Дисплей</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation>Пробудження за дотиком</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>звук</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>одиниці</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>Шпалери</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>Циферблат</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation>USB</translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>Вимкнути</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>Перезавантажити</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>Про ПЗ</translation>
+     </message>
+diff --git a/i18n/asteroid-settings.zh_Hans.ts b/i18n/asteroid-settings.zh_Hans.ts
+index bc5dc10..c908b1c 100644
+--- a/i18n/asteroid-settings.zh_Hans.ts
++++ b/i18n/asteroid-settings.zh_Hans.ts
+@@ -127,5 +127,9 @@
+         <source>Tap-to-wake</source>
+         <translation>触摸唤醒</translation>
+     </message>
++    <message id="id-launcher-page">
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+ </context>
+ </TS>
+diff --git a/i18n/asteroid-settings.zh_Hant.ts b/i18n/asteroid-settings.zh_Hant.ts
+index 0a9f7d0..17260f4 100644
+--- a/i18n/asteroid-settings.zh_Hant.ts
++++ b/i18n/asteroid-settings.zh_Hant.ts
+@@ -70,30 +70,30 @@
+     </message>
+     <message id="id-time-page">
+         <location filename="../TimePage.qml" line="40"/>
+-        <location filename="../main.qml" line="72"/>
++        <location filename="../main.qml" line="73"/>
+         <source>Time</source>
+         <translation>時間</translation>
+     </message>
+     <message id="id-date-page">
+         <location filename="../DatePage.qml" line="31"/>
+-        <location filename="../main.qml" line="78"/>
++        <location filename="../main.qml" line="79"/>
+         <source>Date</source>
+         <translation>日期</translation>
+     </message>
+     <message id="id-language-page">
+         <location filename="../LanguagePage.qml" line="31"/>
+-        <location filename="../main.qml" line="84"/>
++        <location filename="../main.qml" line="85"/>
+         <source>Language</source>
+         <translation>語言</translation>
+     </message>
+     <message id="id-bluetooth-page">
+-        <location filename="../main.qml" line="90"/>
++        <location filename="../main.qml" line="91"/>
+         <source>Bluetooth</source>
+         <translation>藍牙</translation>
+     </message>
+     <message id="id-display-page">
+         <location filename="../DisplayPage.qml" line="33"/>
+-        <location filename="../main.qml" line="96"/>
++        <location filename="../main.qml" line="97"/>
+         <source>Display</source>
+         <translation>顯示</translation>
+     </message>
+@@ -118,44 +118,49 @@
+         <translation type="unfinished">點擊喚醒</translation>
+     </message>
+     <message id="id-sound-page">
+-        <location filename="../main.qml" line="102"/>
++        <location filename="../main.qml" line="103"/>
+         <source>Sound</source>
+         <translation>音效</translation>
+     </message>
+     <message id="id-units-page">
+         <location filename="../UnitsPage.qml" line="26"/>
+-        <location filename="../main.qml" line="110"/>
++        <location filename="../main.qml" line="111"/>
+         <source>Units</source>
+         <translation>單位</translation>
+     </message>
+     <message id="id-wallpaper-page">
+-        <location filename="../main.qml" line="116"/>
++        <location filename="../main.qml" line="117"/>
+         <source>Wallpaper</source>
+         <translation>桌布</translation>
+     </message>
+     <message id="id-watchface-page">
+-        <location filename="../main.qml" line="122"/>
++        <location filename="../main.qml" line="123"/>
+         <source>Watchface</source>
+         <translation>錶面</translation>
+     </message>
+     <message id="id-usb-page">
+         <location filename="../USBPage.qml" line="29"/>
+-        <location filename="../main.qml" line="128"/>
++        <location filename="../main.qml" line="135"/>
+         <source>USB</source>
+         <translation></translation>
+     </message>
++    <message id="id-launcher-page">
++        <location filename="../main.qml" line="129"/>
++        <source>Launcher</source>
++        <translation type="unfinished"></translation>
++    </message>
+     <message id="id-poweroff-page">
+-        <location filename="../main.qml" line="134"/>
++        <location filename="../main.qml" line="141"/>
+         <source>Power Off</source>
+         <translation>關機</translation>
+     </message>
+     <message id="id-reboot-page">
+-        <location filename="../main.qml" line="140"/>
++        <location filename="../main.qml" line="147"/>
+         <source>Reboot</source>
+         <translation>重新啟動</translation>
+     </message>
+     <message id="id-about-page">
+-        <location filename="../main.qml" line="146"/>
++        <location filename="../main.qml" line="153"/>
+         <source>About</source>
+         <translation>關於</translation>
+     </message>
+diff --git a/images/diskBackground.svg b/images/diskBackground.svg
+new file mode 100644
+index 0000000..768baf5
+--- /dev/null
++++ b/images/diskBackground.svg
+@@ -0,0 +1,14 @@
++<svg width="100" height="100" viewBox="0 0 100 100"
++   xmlns="http://www.w3.org/2000/svg">
++
++  <defs>
++    <radialGradient id="shadow">
++      <stop offset="0%"  stop-color="#000000"/>
++      <stop offset="55%" stop-color="#000000"/>
++      <stop offset="75%" stop-color="transparent"/>
++    </radialGradient>
++  </defs>
++
++  <rect width="100" height="100" fill="url(#shadow)" />
++  <circle fill="#f4f4f4" cx="50" cy="50" r="35"/>
++</svg>
+diff --git a/images/diskBackgroundPressed.svg b/images/diskBackgroundPressed.svg
+new file mode 100644
+index 0000000..1f50681
+--- /dev/null
++++ b/images/diskBackgroundPressed.svg
+@@ -0,0 +1,14 @@
++<svg width="100" height="100" viewBox="0 0 100 100"
++   xmlns="http://www.w3.org/2000/svg">
++
++  <defs>
++    <radialGradient id="shadow">
++      <stop offset="0%"  stop-color="#000000"/>
++      <stop offset="55%" stop-color="#000000"/>
++      <stop offset="75%" stop-color="transparent"/>
++    </radialGradient>
++  </defs>
++
++  <rect width="100" height="100" fill="url(#shadow)" />
++  <circle fill="#cccccc" cx="50" cy="50" r="35"/>
++</svg>
+diff --git a/main.qml b/main.qml
+index b0d725c..6ba572b 100644
+--- a/main.qml
++++ b/main.qml
+@@ -36,6 +36,7 @@ Application {
+     Component { id: unitsLayer;      UnitsPage      { } }
+     Component { id: wallpaperLayer;  WallpaperPage  { } }
+     Component { id: watchfaceLayer;  WatchfacePage  { } }
++    Component { id: launcherLayer;   LauncherPage  { } }
+     Component { id: usbLayer;        USBPage        { } }
+     Component { id: poweroffLayer;   PoweroffPage   { } }
+     Component { id: rebootLayer;     RebootPage     { } }
+@@ -53,7 +54,7 @@ Application {
+ 
+         Flickable {
+             function elementsNb() {
+-                var nb = 12;
++                var nb = 13;
+                 if(DeviceInfo.hasSpeaker) nb ++
+                 return nb;
+             }
+@@ -123,6 +124,12 @@ Application {
+                     iconName: "ios-color-wand-outline"
+                     onClicked: layerStack.push(watchfaceLayer)
+                 }
++                ListItem {
++                    //% "Launcher"
++                    title: qsTrId("id-launcher-page")
++                    iconName: "ios-home-outline"
++                    onClicked: layerStack.push(launcherLayer)
++                }
+                 ListItem {
+                     //% "USB"
+                     title: qsTrId("id-usb-page")
+diff --git a/resources.qrc b/resources.qrc
+index adc9215..31a0b31 100644
+--- a/resources.qrc
++++ b/resources.qrc
+@@ -11,9 +11,17 @@
+         <file>UnitsPage.qml</file>
+         <file>WallpaperPage.qml</file>
+         <file>WatchfacePage.qml</file>
++        <file>LauncherPage.qml</file>
+         <file>USBPage.qml</file>
+         <file>PoweroffPage.qml</file>
+         <file>RebootPage.qml</file>
+         <file>AboutPage.qml</file>
+     </qresource>
++    <qresource prefix="/">
++        <file>images/diskBackground.svg</file>
++        <file>images/diskBackgroundPressed.svg</file>
++    </qresource>
++    <qresource prefix="/qml/">
++        <file alias="LauncherItemDelegate.qml">LauncherItemDelegate.qml</file>
++    </qresource>
+ </RCC>
+-- 
+2.31.1
+
