@@ -8,7 +8,12 @@ SRCREV = "${AUTOREV}"
 PR = "r1"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
-inherit qmake5
+#inherit qmake5
+inherit cmake_qt5
 
-DEPENDS += "qml-asteroid qttools-native qtdeclarative-native"
-FILES_${PN} += "/usr/share/translations/"
+DEPENDS += "qml-asteroid qml-asteroid-native qttools-native qtdeclarative-native"
+
+do_install_append() {
+    # This app only uses translations for the desktop shortcut.
+    rm -rvf ${D}/usr/share/translations/
+}
