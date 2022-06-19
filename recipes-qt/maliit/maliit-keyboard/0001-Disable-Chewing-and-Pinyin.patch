@@ -1,0 +1,2067 @@
+From e7f44b48d0d460a2c3ead8552c3506f3e1f13014 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Darrel=20Gri=C3=ABt?= <dgriet@gmail.com>
+Date: Sun, 19 Jun 2022 15:21:01 +0200
+Subject: [PATCH] Disable Chewing and Pinyin.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Darrel Griët <dgriet@gmail.com>
+---
+ CMakeLists.txt                                |  18 --
+ plugins/chewing/qml/Keyboard_zh-hant.qml      | 114 --------
+ .../chewing/qml/Keyboard_zh-hant_email.qml    |  96 -------
+ plugins/chewing/qml/Keyboard_zh-hant_url.qml  |  95 -------
+ .../qml/Keyboard_zh-hant_url_search.qml       |  96 -------
+ plugins/chewing/src/chewingadapter.cpp        | 109 -------
+ plugins/chewing/src/chewingadapter.h          |  48 ----
+ .../chewing/src/chewinglanguagefeatures.cpp   | 113 --------
+ plugins/chewing/src/chewinglanguagefeatures.h |  44 ---
+ plugins/chewing/src/chewingplugin.cpp         |  56 ----
+ plugins/chewing/src/chewingplugin.h           |  50 ----
+ plugins/chewing/src/chewingplugin.json        |   5 -
+ plugins/pinyin/qml/Keyboard_zh-hans.qml       |  94 ------
+ plugins/pinyin/qml/Keyboard_zh-hans_email.qml |  96 -------
+ plugins/pinyin/qml/Keyboard_zh-hans_url.qml   |  95 -------
+ .../qml/Keyboard_zh-hans_url_search.qml       |  96 -------
+ .../pinyin/src/chineselanguagefeatures.cpp    | 108 -------
+ plugins/pinyin/src/chineselanguagefeatures.h  |  45 ---
+ plugins/pinyin/src/pinyinadapter.cpp          | 267 ------------------
+ plugins/pinyin/src/pinyinadapter.h            |  83 ------
+ plugins/pinyin/src/pinyinplugin.cpp           |  58 ----
+ plugins/pinyin/src/pinyinplugin.h             |  50 ----
+ plugins/pinyin/src/pinyinplugin.json          |   5 -
+ qml/keys/languages.js                         |   2 -
+ 24 files changed, 1843 deletions(-)
+ delete mode 100644 plugins/chewing/qml/Keyboard_zh-hant.qml
+ delete mode 100644 plugins/chewing/qml/Keyboard_zh-hant_email.qml
+ delete mode 100644 plugins/chewing/qml/Keyboard_zh-hant_url.qml
+ delete mode 100644 plugins/chewing/qml/Keyboard_zh-hant_url_search.qml
+ delete mode 100644 plugins/chewing/src/chewingadapter.cpp
+ delete mode 100644 plugins/chewing/src/chewingadapter.h
+ delete mode 100644 plugins/chewing/src/chewinglanguagefeatures.cpp
+ delete mode 100644 plugins/chewing/src/chewinglanguagefeatures.h
+ delete mode 100644 plugins/chewing/src/chewingplugin.cpp
+ delete mode 100644 plugins/chewing/src/chewingplugin.h
+ delete mode 100644 plugins/chewing/src/chewingplugin.json
+ delete mode 100644 plugins/pinyin/qml/Keyboard_zh-hans.qml
+ delete mode 100644 plugins/pinyin/qml/Keyboard_zh-hans_email.qml
+ delete mode 100644 plugins/pinyin/qml/Keyboard_zh-hans_url.qml
+ delete mode 100644 plugins/pinyin/qml/Keyboard_zh-hans_url_search.qml
+ delete mode 100644 plugins/pinyin/src/chineselanguagefeatures.cpp
+ delete mode 100644 plugins/pinyin/src/chineselanguagefeatures.h
+ delete mode 100644 plugins/pinyin/src/pinyinadapter.cpp
+ delete mode 100644 plugins/pinyin/src/pinyinadapter.h
+ delete mode 100644 plugins/pinyin/src/pinyinplugin.cpp
+ delete mode 100644 plugins/pinyin/src/pinyinplugin.h
+ delete mode 100644 plugins/pinyin/src/pinyinplugin.json
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 352ee240..a781ed18 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -37,8 +37,6 @@ find_package(Intl REQUIRED)
+ 
+ find_package(AnthyUnicode)
+ find_package(Anthy)
+-find_package(Pinyin)
+-find_package(Chewing)
+ 
+ set(MALIIT_KEYBOARD_LIB_SOURCES
+         src/lib/logic/abstractlanguagefeatures.h
+@@ -374,22 +372,6 @@ if(enable-presage)
+             LIBRARIES westernsupport
+             DIRECTORY qml/keys)
+ endif()
+-if(Pinyin_FOUND)
+-    abstract_language_plugin(zh-hans pinyin ABSTRACT_LANGUAGE_PLUGIN
+-            PLUGIN_DIR pinyin
+-            LANGUAGE_FEATURES chinese
+-            SOURCES pinyinadapter.cpp pinyinadapter.h
+-            LIBRARIES ${Pinyin_LIBRARIES}
+-            INCLUDE_DIRS ${Pinyin_INCLUDE_DIRS}
+-            DEFINITIONS PINYIN_DATA_DIR="${Pinyin_DATA_DIR}")
+-endif()
+-if(Chewing_FOUND)
+-    abstract_language_plugin(zh-hant chewing ABSTRACT_LANGUAGE_PLUGIN
+-            PLUGIN_DIR chewing
+-            SOURCES chewingadapter.cpp chewingadapter.h
+-            LIBRARIES ${Chewing_LIBRARIES}
+-            INCLUDE_DIRS ${Chewing_INCLUDE_DIRS})
+-endif()
+ 
+ # Installation
+ 
+diff --git a/plugins/chewing/qml/Keyboard_zh-hant.qml b/plugins/chewing/qml/Keyboard_zh-hant.qml
+deleted file mode 100644
+index 0c8e9c68..00000000
+--- a/plugins/chewing/qml/Keyboard_zh-hant.qml
++++ /dev/null
+@@ -1,114 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.0
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-        spacing: 0
+-        property real offset: Device.gu(0.3)
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { valueToSubmit: "1"; annotation: valueToSubmit; label: "ㄅ"; shifted: "1"; leftSide: true; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "2"; annotation: valueToSubmit; label: "ㄉ"; shifted: "2"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "3"; annotation: valueToSubmit; label: "ˇ"; shifted: "3"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "4"; annotation: valueToSubmit; label: "ˋ"; shifted: "4"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "5"; annotation: valueToSubmit; label: "ㄓ"; shifted: "5"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "6"; annotation: valueToSubmit; label: "ˊ"; shifted: "6"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "7"; annotation: valueToSubmit; label: "˙"; shifted: "7"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "8"; annotation: valueToSubmit; label: "ㄚ"; shifted: "8"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "9"; annotation: valueToSubmit; label: "ㄞ"; shifted: "9"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "0"; annotation: valueToSubmit; label: "ㄢ"; shifted: "0"; rightSide: true; textCenterOffset: c1.offset; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { valueToSubmit: "q"; annotation: valueToSubmit; label: "ㄆ"; shifted: "q"; leftSide: true; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "w"; annotation: valueToSubmit; label: "ㄊ"; shifted: "w"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "e"; annotation: valueToSubmit; label: "ㄍ"; shifted: "e"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "r"; annotation: valueToSubmit; label: "ㄐ"; shifted: "r"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "t"; annotation: valueToSubmit; label: "ㄔ"; shifted: "t"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "y"; annotation: valueToSubmit; label: "ㄗ"; shifted: "y"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "u"; annotation: valueToSubmit; label: "ㄧ"; shifted: "u"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "i"; annotation: valueToSubmit; label: "ㄛ"; shifted: "i"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "o"; annotation: valueToSubmit; label: "ㄟ"; shifted: "o"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "p"; annotation: valueToSubmit; label: "ㄣ"; shifted: "p"; rightSide: true; textCenterOffset: c1.offset; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { valueToSubmit: "a"; annotation: valueToSubmit; label: "ㄇ"; shifted: "a"; leftSide: true; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "s"; annotation: valueToSubmit; label: "ㄋ"; shifted: "s"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "d"; annotation: valueToSubmit; label: "ㄎ"; shifted: "d"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "f"; annotation: valueToSubmit; label: "ㄑ"; shifted: "f"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "g"; annotation: valueToSubmit; label: "ㄕ"; shifted: "g"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "h"; annotation: valueToSubmit; label: "ㄘ"; shifted: "h"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "j"; annotation: valueToSubmit; label: "ㄨ"; shifted: "j"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "k"; annotation: valueToSubmit; label: "ㄜ"; shifted: "k"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "l"; annotation: valueToSubmit; label: "ㄠ"; shifted: "l"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: ";"; annotation: valueToSubmit; label: "ㄤ"; shifted: ";"; rightSide: true; textCenterOffset: c1.offset; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { valueToSubmit: "z"; annotation: valueToSubmit; label: "ㄈ"; shifted: "z"; leftSide: true; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "x"; annotation: valueToSubmit; label: "ㄌ"; shifted: "x"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "c"; annotation: valueToSubmit; label: "ㄏ"; shifted: "c"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "v"; annotation: valueToSubmit; label: "ㄒ"; shifted: "v"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "b"; annotation: valueToSubmit; label: "ㄖ"; shifted: "b"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "n"; annotation: valueToSubmit; label: "ㄙ"; shifted: "n"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "m"; annotation: valueToSubmit; label: "ㄩ"; shifted: "m"; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: ","; annotation: valueToSubmit; label: "ㄝ"; shifted: ","; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "."; annotation: valueToSubmit; label: "ㄡ"; shifted: "."; textCenterOffset: c1.offset; }
+-            CharKey { valueToSubmit: "/"; annotation: valueToSubmit; label: "ㄥ"; shifted: "/"; rightSide: true; textCenterOffset: c1.offset; }
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey; label: "符号";             anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "。"; extended: [",", "，"]; extendedShifted: [",", "，"]; shifted: "。"; anchors.left: languageMenuButton.right; height: parent.height; }
+-            SpaceKey       { id: spaceKey;                               anchors.left: dotKey.right; anchors.right: csymKey.left; noMagnifier: true; height: parent.height; }
+-            CharKey        { id: csymKey; valueToSubmit: "-"; annotation: valueToSubmit; label: "ㄦ"; shifted: "-";    anchors.right: backspaceKey.left; }
+-            BackspaceKey   { id: backspaceKey; anchors.right: enterKey.left; width: languageMenuButton.width; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/chewing/qml/Keyboard_zh-hant_email.qml b/plugins/chewing/qml/Keyboard_zh-hant_email.qml
+deleted file mode 100644
+index b7421cad..00000000
+--- a/plugins/chewing/qml/Keyboard_zh-hant_email.qml
++++ /dev/null
+@@ -1,96 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.0
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "è", "é", "ê", "ë", "€"]; extendedShifted: ["3", "È", "É", "Ê", "Ë", "€"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5", "þ"]; extendedShifted: ["5", "Þ"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "ý", "¥"]; extendedShifted: ["6", "Ý", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7","û","ù","ú","ü"]; extendedShifted: ["7","Û","Ù","Ú","Ü"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "î","ï","ì","í"]; extendedShifted: ["8","Î","Ï","Ì","Í"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ö","ô","ò","ó"]; extendedShifted: ["9","Ö","Ô","Ò","Ó"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ä","à","â","á","ã","å"]; extendedShifted: ["Ä","À","Â","Á","Ã","Å"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; extended: ["ß","$"]; extendedShifted: ["$"] }
+-            CharKey { label: "d"; shifted: "D"; extended: ["ð"]; extendedShifted: ["Ð"] }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; extended: ["ç"]; extendedShifted: ["Ç"] }
+-            CharKey { label: "v"; shifted: "V"; }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; extended: ["ñ"]; extendedShifted: ["Ñ"] }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey;                            anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: atKey;    label: "@"; shifted: "@";     anchors.left: languageMenuButton.right; height: parent.height; }
+-            SpaceKey       { id: spaceKey;                               anchors.left: atKey.right; anchors.right: urlKey.left; noMagnifier: true; height: parent.height; }
+-            UrlKey         { id: urlKey; label: ".cn"; extended: [".com", ".中國", ".中国", ".hk", ".香港"]; extendedShifted: [".mo", ".tw", ".台灣", ".台湾"]; anchors.right: dotKey.left; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "."; shifted: ".";  anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/chewing/qml/Keyboard_zh-hant_url.qml b/plugins/chewing/qml/Keyboard_zh-hant_url.qml
+deleted file mode 100644
+index 7e0d12ed..00000000
+--- a/plugins/chewing/qml/Keyboard_zh-hant_url.qml
++++ /dev/null
+@@ -1,95 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.0
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "è", "é", "ê", "ë", "€"]; extendedShifted: ["3", "È", "É", "Ê", "Ë", "€"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5", "þ"]; extendedShifted: ["5", "Þ"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "ý", "¥"]; extendedShifted: ["6", "Ý", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7","û","ù","ú","ü"]; extendedShifted: ["7","Û","Ù","Ú","Ü"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "î","ï","ì","í"]; extendedShifted: ["8","Î","Ï","Ì","Í"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ö","ô","ò","ó"]; extendedShifted: ["9","Ö","Ô","Ò","Ó"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ä","à","â","á","ã","å"]; extendedShifted: ["Ä","À","Â","Á","Ã","Å"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; extended: ["ß","$"]; extendedShifted: ["$"] }
+-            CharKey { label: "d"; shifted: "D"; extended: ["ð"]; extendedShifted: ["Ð"] }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; extended: ["ç"]; extendedShifted: ["Ç"] }
+-            CharKey { label: "v"; shifted: "V"; }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; extended: ["ñ"]; extendedShifted: ["Ñ"] }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey;                            anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: slashKey; label: "/"; shifted: "/";     anchors.left: languageMenuButton.right; height: parent.height; }
+-            UrlKey         { id: urlKey; label: ".cn"; extended: [".com", ".中國", ".中国", ".hk", ".香港"]; extendedShifted: [".mo", ".tw", ".台灣", ".台湾"]; anchors.right: dotKey.left; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "."; shifted: ".";  anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/chewing/qml/Keyboard_zh-hant_url_search.qml b/plugins/chewing/qml/Keyboard_zh-hant_url_search.qml
+deleted file mode 100644
+index b693a6df..00000000
+--- a/plugins/chewing/qml/Keyboard_zh-hant_url_search.qml
++++ /dev/null
+@@ -1,96 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.0
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "è", "é", "ê", "ë", "€"]; extendedShifted: ["3", "È", "É", "Ê", "Ë", "€"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5", "þ"]; extendedShifted: ["5", "Þ"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "ý", "¥"]; extendedShifted: ["6", "Ý", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7","û","ù","ú","ü"]; extendedShifted: ["7","Û","Ù","Ú","Ü"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "î","ï","ì","í"]; extendedShifted: ["8","Î","Ï","Ì","Í"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ö","ô","ò","ó"]; extendedShifted: ["9","Ö","Ô","Ò","Ó"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ä","à","â","á","ã","å"]; extendedShifted: ["Ä","À","Â","Á","Ã","Å"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; extended: ["ß","$"]; extendedShifted: ["$"] }
+-            CharKey { label: "d"; shifted: "D"; extended: ["ð"]; extendedShifted: ["Ð"] }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; extended: ["ç"]; extendedShifted: ["Ç"] }
+-            CharKey { label: "v"; shifted: "V"; }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; extended: ["ñ"]; extendedShifted: ["Ñ"] }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey;                            anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: slashKey; label: "/"; shifted: "/";     anchors.left: languageMenuButton.right; height: parent.height; }
+-            SpaceKey       { id: spaceKey;                               anchors.left: slashKey.right; anchors.right: urlKey.left; noMagnifier: true; height: parent.height; }
+-            UrlKey         { id: urlKey; label: ".cn"; extended: [".com", ".中國", ".中国", ".hk", ".香港"]; extendedShifted: [".mo", ".tw", ".台灣", ".台湾"]; anchors.right: dotKey.left; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "."; shifted: ".";  anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/chewing/src/chewingadapter.cpp b/plugins/chewing/src/chewingadapter.cpp
+deleted file mode 100644
+index 3971ff1d..00000000
+--- a/plugins/chewing/src/chewingadapter.cpp
++++ /dev/null
+@@ -1,109 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#include "chewingadapter.h"
+-
+-#include <iostream>
+-
+-#include <iconv.h>
+-#include <string>
+-#include <string.h>
+-
+-#include <QChar>
+-#include <QCoreApplication>
+-
+-#define CHEWING_MAX_LEN 32
+-
+-ChewingAdapter::ChewingAdapter(QObject *parent) :
+-    QObject(parent),
+-    m_processingWords(false)
+-{
+-    m_chewingContext = chewing_new();
+-    chewing_set_easySymbolInput(m_chewingContext, 0);
+-    chewing_set_maxChiSymbolLen(m_chewingContext, CHEWING_MAX_LEN);
+-    chewing_set_spaceAsSelection(m_chewingContext, 0);
+-}
+-
+-ChewingAdapter::~ChewingAdapter()
+-{
+-    chewing_delete(m_chewingContext);
+-}
+-
+-void ChewingAdapter::parse(const QString& string)
+-{
+-    m_candidates.clear();
+-    clearChewingPreedit();
+-
+-    const QChar *c = string.data();
+-    while (!c->isNull()) {
+-        if (c->isSpace()) {
+-            chewing_handle_Space(m_chewingContext);
+-        } else {
+-            chewing_handle_Default(m_chewingContext, c->toLatin1());
+-        }
+-        c++;
+-    }
+-
+-    char * buf_str = chewing_buffer_String(m_chewingContext);
+-    QString buffer(buf_str);
+-    QString choppedBuffer = buffer;
+-    choppedBuffer.chop(1);
+-    chewing_free(buf_str);
+-    
+-    chewing_cand_open(m_chewingContext);
+-
+-    if (!chewing_cand_CheckDone(m_chewingContext)) {
+-        // Get candidate words
+-        chewing_cand_Enumerate(m_chewingContext);
+-        while (chewing_cand_hasNext(m_chewingContext)) {
+-            char *chewingCand = chewing_cand_String(m_chewingContext);
+-            QString candidate(chewingCand);
+-            m_candidates.append(choppedBuffer + candidate);
+-            chewing_free(chewingCand);
+-        }
+-    }
+-
+-    if (chewing_buffer_Len(m_chewingContext) <= chewing_cursor_Current(m_chewingContext)) {    
+-        // Insert bopomofo string
+-        m_candidates.prepend(buffer + QString(chewing_bopomofo_String_static(m_chewingContext)));
+-    }
+-
+-    chewing_cand_close(m_chewingContext);
+-
+-    Q_EMIT newPredictionSuggestions(string, m_candidates);
+-}
+-
+-void ChewingAdapter::clearChewingPreedit()
+-{
+-    int origState = chewing_get_escCleanAllBuf(m_chewingContext);
+-    // Send a false event, then clean it to wipe the commit
+-    chewing_handle_Default(m_chewingContext, '1');
+-    chewing_set_escCleanAllBuf(m_chewingContext, 1);
+-    chewing_handle_Esc(m_chewingContext);
+-    chewing_set_escCleanAllBuf(m_chewingContext, origState);
+-    chewing_clean_preedit_buf(m_chewingContext);
+-}
+-
+-void ChewingAdapter::wordCandidateSelected(const QString& word)
+-{
+-    Q_UNUSED(word)
+-}
+-
+-void ChewingAdapter::reset()
+-{
+-    clearChewingPreedit();
+-}
+-
+diff --git a/plugins/chewing/src/chewingadapter.h b/plugins/chewing/src/chewingadapter.h
+deleted file mode 100644
+index da30ecac..00000000
+--- a/plugins/chewing/src/chewingadapter.h
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#ifndef CHEWINGADAPTER_H
+-#define CHEWINGADAPTER_H
+-
+-#include <QObject>
+-#include <QStringList>
+-
+-#include "chewing.h"
+-
+-class ChewingAdapter : public QObject
+-{
+-    Q_OBJECT
+-
+-    QStringList m_candidates;
+-    bool m_processingWords;
+-    ChewingContext *m_chewingContext;
+-
+-public:
+-    explicit ChewingAdapter(QObject *parent = nullptr);
+-    ~ChewingAdapter() override;
+-
+-signals:
+-    void newPredictionSuggestions(QString, QStringList);
+-
+-public slots:
+-    void parse(const QString& string);
+-    void clearChewingPreedit();
+-    void wordCandidateSelected(const QString& word);
+-    void reset();
+-};
+-
+-
+-#endif // CHEWINGADAPTER_H
+diff --git a/plugins/chewing/src/chewinglanguagefeatures.cpp b/plugins/chewing/src/chewinglanguagefeatures.cpp
+deleted file mode 100644
+index bd23ad52..00000000
+--- a/plugins/chewing/src/chewinglanguagefeatures.cpp
++++ /dev/null
+@@ -1,113 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#include "chewinglanguagefeatures.h"
+-
+-ChewingLanguageFeatures::ChewingLanguageFeatures(QObject *parent) :
+-    QObject(parent)
+-{
+-}
+-
+-ChewingLanguageFeatures::~ChewingLanguageFeatures() = default;
+-
+-bool ChewingLanguageFeatures::alwaysShowSuggestions() const
+-{
+-    // Chewing characters can only be entered via suggestions, so we ignore
+-    // hints that would otherwise disable them.
+-    return true;
+-}
+-
+-bool ChewingLanguageFeatures::autoCapsAvailable() const
+-{
+-    // Automatic switching to capital letters doesn't make sense when 
+-    // inputting Chewing
+-    return false;
+-}
+-
+-bool ChewingLanguageFeatures::activateAutoCaps(const QString &preedit) const
+-{
+-    Q_UNUSED(preedit)
+-    return false;
+-}
+-
+-QString ChewingLanguageFeatures::appendixForReplacedPreedit(const QString &preedit) const
+-{
+-    if (preedit.isEmpty())
+-        return QString();
+-
+-    return QStringLiteral(" ");
+-}
+-
+-bool ChewingLanguageFeatures::isSeparator(const QString &text) const
+-{
+-    static const QString separators = QStringLiteral("。、!?:…\r\n");
+-
+-    if (text.isEmpty()) {
+-        return false;
+-    }
+-
+-    if (separators.contains(text.right(1))) {
+-        return true;
+-    }
+-
+-    return false;
+-}
+-
+-bool ChewingLanguageFeatures::isSymbol(const QString &text) const
+-{
+-    static const QString symbols = QStringLiteral(R"(*#+=()@~\€£$¥₹%<>[]`^|_—–•§{}¡¿«»"“”„&)");
+-
+-    if (text.isEmpty()) {
+-        return false;
+-    }
+-
+-    if (symbols.contains(text.right(1))) {
+-        return true;
+-    }
+-
+-    return false;
+-}
+-
+-bool ChewingLanguageFeatures::ignoreSimilarity() const
+-{
+-    return true;
+-}
+-
+-bool ChewingLanguageFeatures::wordEngineAvailable() const
+-{
+-    return true;
+-}
+-
+-QString ChewingLanguageFeatures::fullStopSequence() const
+-{
+-    return QStringLiteral("。");
+-}
+-
+-bool ChewingLanguageFeatures::restorePreedit() const
+-{
+-    return false;
+-}
+-
+-bool ChewingLanguageFeatures::commitOnSpace() const
+-{
+-    return false;
+-}
+-
+-bool ChewingLanguageFeatures::showPrimaryInPreedit() const
+-{
+-    return true;
+-}
+-
+diff --git a/plugins/chewing/src/chewinglanguagefeatures.h b/plugins/chewing/src/chewinglanguagefeatures.h
+deleted file mode 100644
+index 20da83e1..00000000
+--- a/plugins/chewing/src/chewinglanguagefeatures.h
++++ /dev/null
+@@ -1,44 +0,0 @@
+-/*
+- * Copyright 2016 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#ifndef CHEWINGLANGUAGEFEATURES_H
+-#define CHEWINGLANGUAGEFEATURES_H
+-
+-#include "abstractlanguagefeatures.h"
+-#include <QObject>
+-
+-class ChewingLanguageFeatures : public QObject, public AbstractLanguageFeatures
+-{
+-    Q_OBJECT
+-public:
+-    explicit ChewingLanguageFeatures(QObject *parent = nullptr);
+-    ~ChewingLanguageFeatures() override;
+-
+-    bool alwaysShowSuggestions() const override;
+-    bool autoCapsAvailable() const override;
+-    bool activateAutoCaps(const QString &preedit) const override;
+-    QString appendixForReplacedPreedit(const QString &preedit) const override;
+-    bool isSeparator(const QString &text) const override;
+-    bool isSymbol(const QString &text) const override;
+-    bool ignoreSimilarity() const override;
+-    bool wordEngineAvailable() const override;
+-    QString fullStopSequence() const override;
+-    bool restorePreedit() const override;
+-    bool commitOnSpace() const override;
+-    bool showPrimaryInPreedit() const override;
+-};
+-
+-#endif // CHINESELANGUAGEFEATURES_H
+diff --git a/plugins/chewing/src/chewingplugin.cpp b/plugins/chewing/src/chewingplugin.cpp
+deleted file mode 100644
+index f42acab1..00000000
+--- a/plugins/chewing/src/chewingplugin.cpp
++++ /dev/null
+@@ -1,56 +0,0 @@
+-#include "chewingplugin.h"
+-#include "chewinglanguagefeatures.h"
+-
+-#include <QDebug>
+-
+-ChewingPlugin::ChewingPlugin(QObject *parent) :
+-    AbstractLanguagePlugin(parent)
+-  , m_chewingLanguageFeatures(new ChewingLanguageFeatures)
+-  , m_processingWord(false)
+-{
+-    m_chewingThread = new QThread();
+-    m_chewingAdapter = new ChewingAdapter();
+-    m_chewingAdapter->moveToThread(m_chewingThread);
+-
+-    connect(m_chewingAdapter, &ChewingAdapter::newPredictionSuggestions, this, &ChewingPlugin::finishedProcessing);
+-    connect(this, &ChewingPlugin::parsePredictionText, m_chewingAdapter, &ChewingAdapter::parse);
+-    connect(this, &ChewingPlugin::candidateSelected, m_chewingAdapter, &ChewingAdapter::wordCandidateSelected);
+-    m_chewingThread->start();
+-}
+-
+-ChewingPlugin::~ChewingPlugin()
+-{
+-    m_chewingAdapter->deleteLater();
+-    m_chewingThread->quit();
+-    m_chewingThread->wait();
+-}
+-
+-void ChewingPlugin::predict(const QString& surroundingLeft, const QString& preedit)
+-{
+-    Q_UNUSED(surroundingLeft);
+-    m_nextWord = preedit;
+-    if (!m_processingWord) {
+-        m_processingWord = true;
+-        Q_EMIT parsePredictionText(preedit);
+-    }
+-}
+-
+-void ChewingPlugin::wordCandidateSelected(QString word)
+-{
+-    Q_EMIT candidateSelected(word);
+-}
+-
+-AbstractLanguageFeatures* ChewingPlugin::languageFeature()
+-{
+-    return m_chewingLanguageFeatures;
+-}
+-
+-void ChewingPlugin::finishedProcessing(QString word, QStringList suggestions)
+-{
+-    Q_EMIT newPredictionSuggestions(word, suggestions);
+-    if (word != m_nextWord) {
+-        Q_EMIT parsePredictionText(word);
+-    } else {
+-        m_processingWord = false;
+-    }
+-}
+diff --git a/plugins/chewing/src/chewingplugin.h b/plugins/chewing/src/chewingplugin.h
+deleted file mode 100644
+index 5c5bbb74..00000000
+--- a/plugins/chewing/src/chewingplugin.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#ifndef CHEWINGPLUGIN_H
+-#define CHEWINGPLUGIN_H
+-
+-#include <QObject>
+-#include <QStringList>
+-#include <QThread>
+-#include "languageplugininterface.h"
+-#include "abstractlanguageplugin.h"
+-
+-#include "chewingadapter.h"
+-#include <iostream>
+-
+-class ChewingLanguageFeatures;
+-
+-class ChewingPlugin : public AbstractLanguagePlugin
+-{
+-    Q_OBJECT
+-    Q_PLUGIN_METADATA(IID "io.maliit.keyboard.LanguagePlugin.1" FILE "chewingplugin.json")
+-    Q_INTERFACES(LanguagePluginInterface)
+-
+-public:
+-    explicit ChewingPlugin(QObject *parent = nullptr);
+-    ~ChewingPlugin() override;
+-    
+-    void predict(const QString& surroundingLeft, const QString& preedit) override;
+-    void wordCandidateSelected(QString word) override;
+-
+-    AbstractLanguageFeatures* languageFeature() override;
+-
+-    //! spell checker
+-    void spellCheckerSuggest(const QString& word, int limit) override { Q_UNUSED(word); Q_UNUSED(limit); }
+-    void addToSpellCheckerUserWordList(const QString& word) override { Q_UNUSED(word); }
+-    bool setLanguage(const QString& languageId, const QString& pluginPath) override { Q_UNUSED(languageId); Q_UNUSED(pluginPath); return false; }
+-
+-signals:
+-    void parsePredictionText(QString preedit);
+-    void candidateSelected(QString word);
+-    
+-public slots:
+-    void finishedProcessing(QString word, QStringList suggestions);
+-    
+-private:
+-    QThread *m_chewingThread;
+-    ChewingAdapter *m_chewingAdapter;
+-    ChewingLanguageFeatures* m_chewingLanguageFeatures;
+-    QString m_nextWord;
+-    bool m_processingWord;
+-};
+-
+-#endif // CHEWINGPLUGIN_H
+diff --git a/plugins/chewing/src/chewingplugin.json b/plugins/chewing/src/chewingplugin.json
+deleted file mode 100644
+index a4346b62..00000000
+--- a/plugins/chewing/src/chewingplugin.json
++++ /dev/null
+@@ -1,5 +0,0 @@
+-{
+-    "IID": "io.maliit.keyboard.LanguagePlugin.1",
+-    "LanguageId": "zh-hant",
+-    "Language": "Chinese (Chewing)"
+-}
+\ No newline at end of file
+diff --git a/plugins/pinyin/qml/Keyboard_zh-hans.qml b/plugins/pinyin/qml/Keyboard_zh-hans.qml
+deleted file mode 100644
+index 58aefa1b..00000000
+--- a/plugins/pinyin/qml/Keyboard_zh-hans.qml
++++ /dev/null
+@@ -1,94 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.4
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols_zh-hans.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "ē", "é", "ě", "è"]; extendedShifted: ["3", "Ē", "É", "Ě", "È"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5"]; extendedShifted: ["5"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "¥"]; extendedShifted: ["6", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7", "ū", "ú", "ǔ", "ù"]; extendedShifted: ["7", "Ū", "Ú", "Ǔ","Ù"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "ī", "í", "ǐ", "ì"]; extendedShifted: ["8", "Ī", "Í", "Ǐ", "Ì"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ō", "ó", "ǒ", "ò"]; extendedShifted: ["9", "Ō", "Ó", "Ǒ", "Ò"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ā", "á", "ǎ", "à"]; extendedShifted: ["Ā", "Á", "Ǎ", "À"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; }
+-            CharKey { label: "d"; shifted: "D"; }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; }
+-            CharKey { label: "v"; shifted: "V"; extended: ["ü", "ǖ", "ǘ", "ǚ", "ǜ"]; extendedShifted: ["Ü", "Ǖ", "Ǘ", "Ǚ", "Ǜ"] }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey; label: "符号";              anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: commaKey;    label: "，"; shifted: ",";  anchors.left: languageMenuButton.right; height: parent.height; }
+-            SpaceKey       { id: spaceKey;                               anchors.left: commaKey.right; anchors.right: dotKey.left; noMagnifier: true; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "。"; shifted: "."; anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/pinyin/qml/Keyboard_zh-hans_email.qml b/plugins/pinyin/qml/Keyboard_zh-hans_email.qml
+deleted file mode 100644
+index 72ce867b..00000000
+--- a/plugins/pinyin/qml/Keyboard_zh-hans_email.qml
++++ /dev/null
+@@ -1,96 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.4
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "è", "é", "ê", "ë", "€"]; extendedShifted: ["3", "È", "É", "Ê", "Ë", "€"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5", "þ"]; extendedShifted: ["5", "Þ"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "ý", "¥"]; extendedShifted: ["6", "Ý", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7","û","ù","ú","ü"]; extendedShifted: ["7","Û","Ù","Ú","Ü"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "î","ï","ì","í"]; extendedShifted: ["8","Î","Ï","Ì","Í"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ö","ô","ò","ó"]; extendedShifted: ["9","Ö","Ô","Ò","Ó"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ä","à","â","á","ã","å"]; extendedShifted: ["Ä","À","Â","Á","Ã","Å"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; extended: ["ß","$"]; extendedShifted: ["$"] }
+-            CharKey { label: "d"; shifted: "D"; extended: ["ð"]; extendedShifted: ["Ð"] }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; extended: ["ç"]; extendedShifted: ["Ç"] }
+-            CharKey { label: "v"; shifted: "V"; }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; extended: ["ñ"]; extendedShifted: ["Ñ"] }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey;                            anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: atKey;    label: "@"; shifted: "@";     anchors.left: languageMenuButton.right; height: parent.height; }
+-            SpaceKey       { id: spaceKey;                               anchors.left: atKey.right; anchors.right: urlKey.left; noMagnifier: true; height: parent.height; }
+-            UrlKey         { id: urlKey; label: ".cn"; extended: [".com", ".中國", ".中国", ".hk", ".香港"]; extendedShifted: [".mo", ".tw", ".台灣", ".台湾"]; anchors.right: dotKey.left; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "."; shifted: ".";  anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/pinyin/qml/Keyboard_zh-hans_url.qml b/plugins/pinyin/qml/Keyboard_zh-hans_url.qml
+deleted file mode 100644
+index 773d5b31..00000000
+--- a/plugins/pinyin/qml/Keyboard_zh-hans_url.qml
++++ /dev/null
+@@ -1,95 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.4
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "è", "é", "ê", "ë", "€"]; extendedShifted: ["3", "È", "É", "Ê", "Ë", "€"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5", "þ"]; extendedShifted: ["5", "Þ"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "ý", "¥"]; extendedShifted: ["6", "Ý", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7","û","ù","ú","ü"]; extendedShifted: ["7","Û","Ù","Ú","Ü"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "î","ï","ì","í"]; extendedShifted: ["8","Î","Ï","Ì","Í"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ö","ô","ò","ó"]; extendedShifted: ["9","Ö","Ô","Ò","Ó"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ä","à","â","á","ã","å"]; extendedShifted: ["Ä","À","Â","Á","Ã","Å"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; extended: ["ß","$"]; extendedShifted: ["$"] }
+-            CharKey { label: "d"; shifted: "D"; extended: ["ð"]; extendedShifted: ["Ð"] }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; extended: ["ç"]; extendedShifted: ["Ç"] }
+-            CharKey { label: "v"; shifted: "V"; }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; extended: ["ñ"]; extendedShifted: ["Ñ"] }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey;                            anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: slashKey; label: "/"; shifted: "/";     anchors.left: languageMenuButton.right; height: parent.height; }
+-            UrlKey         { id: urlKey; label: ".cn"; extended: [".com", ".中國", ".中国", ".hk", ".香港"]; extendedShifted: [".mo", ".tw", ".台灣", ".台湾"]; anchors.right: dotKey.left; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "."; shifted: ".";  anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/pinyin/qml/Keyboard_zh-hans_url_search.qml b/plugins/pinyin/qml/Keyboard_zh-hans_url_search.qml
+deleted file mode 100644
+index a56adc76..00000000
+--- a/plugins/pinyin/qml/Keyboard_zh-hans_url_search.qml
++++ /dev/null
+@@ -1,96 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-import QtQuick 2.4
+-
+-import MaliitKeyboard 2.0
+-
+-import keys 1.0
+-
+-KeyPad {
+-    anchors.fill: parent
+-
+-    content: c1
+-    symbols: "languages/Keyboard_symbols.qml"
+-
+-    Column {
+-        id: c1
+-        anchors.fill: parent
+-
+-        spacing: 0
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "q"; shifted: "Q"; extended: ["1"]; extendedShifted: ["1"]; leftSide: true; }
+-            CharKey { label: "w"; shifted: "W"; extended: ["2"]; extendedShifted: ["2"] }
+-            CharKey { label: "e"; shifted: "E"; extended: ["3", "è", "é", "ê", "ë", "€"]; extendedShifted: ["3", "È", "É", "Ê", "Ë", "€"] }
+-            CharKey { label: "r"; shifted: "R"; extended: ["4"]; extendedShifted: ["4"] }
+-            CharKey { label: "t"; shifted: "T"; extended: ["5", "þ"]; extendedShifted: ["5", "Þ"] }
+-            CharKey { label: "y"; shifted: "Y"; extended: ["6", "ý", "¥"]; extendedShifted: ["6", "Ý", "¥"] }
+-            CharKey { label: "u"; shifted: "U"; extended: ["7","û","ù","ú","ü"]; extendedShifted: ["7","Û","Ù","Ú","Ü"] }
+-            CharKey { label: "i"; shifted: "I"; extended: ["8", "î","ï","ì","í"]; extendedShifted: ["8","Î","Ï","Ì","Í"] }
+-            CharKey { label: "o"; shifted: "O"; extended: ["9", "ö","ô","ò","ó"]; extendedShifted: ["9","Ö","Ô","Ò","Ó"] }
+-            CharKey { label: "p"; shifted: "P"; extended: ["0"]; extendedShifted: ["0"]; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            CharKey { label: "a"; shifted: "A"; extended: ["ä","à","â","á","ã","å"]; extendedShifted: ["Ä","À","Â","Á","Ã","Å"]; leftSide: true; }
+-            CharKey { label: "s"; shifted: "S"; extended: ["ß","$"]; extendedShifted: ["$"] }
+-            CharKey { label: "d"; shifted: "D"; extended: ["ð"]; extendedShifted: ["Ð"] }
+-            CharKey { label: "f"; shifted: "F"; }
+-            CharKey { label: "g"; shifted: "G"; }
+-            CharKey { label: "h"; shifted: "H"; }
+-            CharKey { label: "j"; shifted: "J"; }
+-            CharKey { label: "k"; shifted: "K"; }
+-            CharKey { label: "l"; shifted: "L"; rightSide: true; }
+-        }
+-
+-        Row {
+-            anchors.horizontalCenter: parent.horizontalCenter;
+-            spacing: 0
+-
+-            ShiftKey {}
+-            CharKey { label: "z"; shifted: "Z"; }
+-            CharKey { label: "x"; shifted: "X"; }
+-            CharKey { label: "c"; shifted: "C"; extended: ["ç"]; extendedShifted: ["Ç"] }
+-            CharKey { label: "v"; shifted: "V"; }
+-            CharKey { label: "b"; shifted: "B"; }
+-            CharKey { label: "n"; shifted: "N"; extended: ["ñ"]; extendedShifted: ["Ñ"] }
+-            CharKey { label: "m"; shifted: "M"; }
+-            BackspaceKey {}
+-        }
+-
+-        Item {
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-
+-            height: panel.keyHeight + Device.row_margin;
+-
+-            SymbolShiftKey { id: symShiftKey;                            anchors.left: parent.left; height: parent.height; }
+-            LanguageKey    { id: languageMenuButton;                     anchors.left: symShiftKey.right; height: parent.height; }
+-            CharKey        { id: slashKey; label: "/"; shifted: "/";     anchors.left: languageMenuButton.right; height: parent.height; }
+-            SpaceKey       { id: spaceKey;                               anchors.left: slashKey.right; anchors.right: urlKey.left; noMagnifier: true; height: parent.height; }
+-            UrlKey         { id: urlKey; label: ".cn"; extended: [".com", ".中國", ".中国", ".hk", ".香港"]; extendedShifted: [".mo", ".tw", ".台灣", ".台湾"]; anchors.right: dotKey.left; height: parent.height; }
+-            CharKey        { id: dotKey;      label: "."; shifted: ".";  anchors.right: enterKey.left; height: parent.height; }
+-            ReturnKey      { id: enterKey;                               anchors.right: parent.right; height: parent.height; }
+-        }
+-    } // column
+-}
+diff --git a/plugins/pinyin/src/chineselanguagefeatures.cpp b/plugins/pinyin/src/chineselanguagefeatures.cpp
+deleted file mode 100644
+index b3e26973..00000000
+--- a/plugins/pinyin/src/chineselanguagefeatures.cpp
++++ /dev/null
+@@ -1,108 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#include "chineselanguagefeatures.h"
+-
+-ChineseLanguageFeatures::ChineseLanguageFeatures(QObject *parent) :
+-    QObject(parent)
+-{
+-}
+-
+-ChineseLanguageFeatures::~ChineseLanguageFeatures() = default;
+-
+-bool ChineseLanguageFeatures::alwaysShowSuggestions() const
+-{
+-    // Pinyin characters can only be entered via suggestions, so we ignore
+-    // hints that would otherwise disable them.
+-    return true;
+-}
+-
+-bool ChineseLanguageFeatures::autoCapsAvailable() const
+-{
+-    // Automatic switching to capital letters doen't make sense when
+-    // inputting Pinyin
+-    return false;
+-}
+-
+-bool ChineseLanguageFeatures::activateAutoCaps(const QString &preedit) const
+-{
+-    Q_UNUSED(preedit)
+-    return false;
+-}
+-
+-QString ChineseLanguageFeatures::appendixForReplacedPreedit(const QString &preedit) const
+-{
+-    if (isSeparator(preedit.right(1)) && contentType() != Maliit::EmailContentType && contentType() != Maliit::UrlContentType) {
+-        return QStringLiteral(" ");
+-    }
+-
+-    return QString();
+-}
+-
+-bool ChineseLanguageFeatures::isSeparator(const QString &text) const
+-{
+-    static const QString separators = QStringLiteral("。、,!?:;.…\r\n");
+-
+-    if (text.isEmpty()) {
+-        return false;
+-    }
+-
+-    if (separators.contains(text.right(1))) {
+-        return true;
+-    }
+-
+-    return false;
+-}
+-
+-bool ChineseLanguageFeatures::isSymbol(const QString &text) const
+-{
+-    static const QString symbols = QStringLiteral(R"(*#+=()@~/\€£$¥₹%<>[]`^|_—–•§{}¡¿«»"“”„&0123456789)");
+-
+-    if (text.isEmpty()) {
+-        return false;
+-    }
+-
+-    if (symbols.contains(text.right(1))) {
+-        return true;
+-    }
+-
+-    return false;
+-}
+-
+-bool ChineseLanguageFeatures::ignoreSimilarity() const
+-{
+-    return true;
+-}
+-
+-bool ChineseLanguageFeatures::wordEngineAvailable() const
+-{
+-    return true;
+-}
+-
+-QString ChineseLanguageFeatures::fullStopSequence() const
+-{
+-    return QStringLiteral("。");
+-}
+-
+-bool ChineseLanguageFeatures::shouldDelayCandidateCommit() const
+-{
+-    return true;
+-}
+-
+-std::size_t ChineseLanguageFeatures::primaryCandidateIndex() const
+-{
+-    return 2;
+-}
+diff --git a/plugins/pinyin/src/chineselanguagefeatures.h b/plugins/pinyin/src/chineselanguagefeatures.h
+deleted file mode 100644
+index bea63d3d..00000000
+--- a/plugins/pinyin/src/chineselanguagefeatures.h
++++ /dev/null
+@@ -1,45 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#ifndef CHINESELANGUAGEFEATURES_H
+-#define CHINESELANGUAGEFEATURES_H
+-
+-#include "abstractlanguagefeatures.h"
+-#include <QObject>
+-
+-class ChineseLanguageFeatures : public QObject, public AbstractLanguageFeatures
+-{
+-    Q_OBJECT
+-public:
+-    explicit ChineseLanguageFeatures(QObject *parent = nullptr);
+-    ~ChineseLanguageFeatures() override;
+-
+-    bool alwaysShowSuggestions() const override;
+-    bool autoCapsAvailable() const override;
+-    bool activateAutoCaps(const QString &preedit) const override;
+-    QString appendixForReplacedPreedit(const QString &preedit) const override;
+-    bool isSeparator(const QString &text) const override;
+-    bool isSymbol(const QString &text) const override;
+-    bool ignoreSimilarity() const override;
+-    bool wordEngineAvailable() const override;
+-    QString fullStopSequence() const override;
+-
+-    bool shouldDelayCandidateCommit() const override;
+-
+-    std::size_t primaryCandidateIndex() const override;
+-};
+-
+-#endif // CHINESELANGUAGEFEATURES_H
+diff --git a/plugins/pinyin/src/pinyinadapter.cpp b/plugins/pinyin/src/pinyinadapter.cpp
+deleted file mode 100644
+index f31a00c8..00000000
+--- a/plugins/pinyin/src/pinyinadapter.cpp
++++ /dev/null
+@@ -1,267 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- * Copyright (C) 2021 Tusooa Zhu <tusooa@kazv.moe>
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#include "pinyinadapter.h"
+-
+-#include <iostream>
+-#include <algorithm>
+-#include <iterator>
+-
+-#include <iconv.h>
+-#include <string>
+-#include <string.h>
+-
+-#include <QDebug>
+-#include <QLoggingCategory>
+-#include <QCoreApplication>
+-#include <QRegExp>
+-
+-#define MAX_SUGGESTIONS 100
+-
+-namespace
+-{
+-    Q_LOGGING_CATEGORY(Pinyin, "maliit.pinyin")
+-}
+-
+-PinyinAdapter::PinyinAdapter(QObject *parent) :
+-    QObject(parent),
+-    m_processingWords(false)
+-{
+-    m_context = pinyin_init(PINYIN_DATA_DIR, ".");
+-    m_instance = pinyin_alloc_instance(m_context);
+-
+-    pinyin_set_options(m_context, IS_PINYIN | PINYIN_INCOMPLETE | USE_DIVIDED_TABLE | USE_RESPLIT_TABLE);
+-}
+-
+-PinyinAdapter::~PinyinAdapter()
+-{
+-    pinyin_free_instance(m_instance);
+-    pinyin_fini(m_context);
+-}
+-
+-void PinyinAdapter::parse(const QString& string)
+-{
+-    m_preedit = string;
+-
+-    m_currentSequence = getCurrentPinyinSequence(string);
+-
+-#ifdef PINYIN_DEBUG
+-    for (int i = 0; i < m_instance->m_pinyin_keys->len; i ++)
+-    {
+-        PinyinKey* pykey = &g_array_index(m_instance->m_pinyin_keys, PinyinKey, i);
+-        gchar* py = pykey->get_pinyin_string();
+-        std::cout << py << " ";
+-        g_free(py);
+-    }
+-    std::cout << std::endl;
+-#endif
+-
+-    genCandidatesForCurrentSequence(string);
+-}
+-
+-void PinyinAdapter::wordCandidateSelected(const QString& word)
+-{
+-    auto index = candidates.indexOf(word);
+-    qCDebug(Pinyin) << "Word chosen is `" << word << "', index=" << index;
+-    if (index == -1 || index == 0) {
+-        // The user has choosen the preedit text or partially converted sequence
+-        resetSequence();
+-        // Special case, we don't need to prepend m_convertedChars
+-        Q_EMIT completed(word);
+-        return;
+-    }
+-
+-    lookup_candidate_t * candidate = nullptr;
+-    auto indexInPinyin = index - 1;
+-    if (pinyin_get_candidate(m_instance, indexInPinyin, &candidate)) {
+-        qCDebug(Pinyin) << "Choosing word, offset was" << m_offset;
+-        m_offset = pinyin_choose_candidate(m_instance, m_offset, candidate);
+-        qCDebug(Pinyin) << "Word chosen, offset is now" << m_offset;
+-    }
+-
+-    m_convertedChars += word;
+-
+-    if (remainingChars().isEmpty()) { // The sequence is completed
+-        qCDebug(Pinyin) << "Sequence is completed";
+-        auto textToCommit = m_convertedChars;
+-        resetSequence();
+-        Q_EMIT completed(textToCommit);
+-    } else { // We still have remaining pinyin sequence, re-generate candidate list.
+-        auto partialResult = m_convertedChars + remainingChars();
+-        qCDebug(Pinyin) << "Sequence is not completed, refresh candidates";
+-        qCDebug(Pinyin) << "Partial result is" << partialResult;
+-        genCandidatesForCurrentSequence(m_preedit, UpdateCandidateListStrategy::AlwaysClear);
+-    }
+-}
+-
+-void PinyinAdapter::reset()
+-{
+-    resetSequence();
+-    pinyin_reset(m_instance);
+-}
+-
+-struct PinyinSequenceIterator
+-{
+-    using value_type = QString;
+-    using reference = const QString &;
+-    using iterator_category = std::input_iterator_tag;
+-    using pointer = const QString *;
+-    using difference_type = std::ptrdiff_t;
+-
+-    pinyin_instance_t *m_instance;
+-    std::size_t m_offset;
+-    std::size_t m_next;
+-    QString m_str;
+-
+-    PinyinSequenceIterator(pinyin_instance_t *instance, std::size_t offset);
+-
+-    PinyinSequenceIterator &operator++();
+-    const QString &operator*() const;
+-
+-    bool operator==(const PinyinSequenceIterator &that) const;
+-    bool operator!=(const PinyinSequenceIterator &that) const { return !(*this == that); }
+-};
+-
+-PinyinSequenceIterator::PinyinSequenceIterator(pinyin_instance_t *instance, std::size_t offset)
+-    : m_instance(instance)
+-    , m_offset(offset)
+-    , m_next(offset + 1) // to be overridden later
+-{
+-    ChewingKey *key;
+-    auto st = pinyin_get_pinyin_key(m_instance, offset, &key);
+-
+-    // If it failed, we are maybe at the end of sequence, so just ignore it
+-    if (!st) { return; }
+-
+-    char *string{};
+-    st = pinyin_get_pinyin_string(m_instance, key, &string);
+-    m_str = QString(string);
+-
+-    if (!st) { return; }
+-    g_free(string);
+-
+-    ChewingKeyRest *keyRest;
+-
+-    st = pinyin_get_pinyin_key_rest(m_instance, m_offset, &keyRest);
+-    if (!st) { return; }
+-    guint16 begin, end;
+-    st = pinyin_get_pinyin_key_rest_positions(
+-        m_instance, keyRest, &begin, &end);
+-
+-    qCDebug(Pinyin) << "begin=" << begin << "end=" << end;
+-    // the next offset is at the end of the current pinyin
+-    m_next = end;
+-}
+-
+-PinyinSequenceIterator &PinyinSequenceIterator::operator++()
+-{
+-    return *this = PinyinSequenceIterator(m_instance, m_next);
+-}
+-
+-const QString &PinyinSequenceIterator::operator*() const
+-{
+-    return m_str;
+-}
+-
+-bool PinyinSequenceIterator::operator==(const PinyinSequenceIterator &that) const
+-{
+-    return m_instance == that.m_instance
+-        && m_offset == that.m_offset;
+-}
+-
+-QStringList PinyinAdapter::getCurrentPinyinSequence(const QString &preeditString)
+-{
+-    // auto oldSequence = m_currentSequence;
+-
+-    // auto firstAlphabeticIndex = preeditString.indexOf(QRegExp("[a-z]"));
+-
+-    // if (firstAlphabeticIndex == -1) {
+-    //     qCDebug(Pinyin) << "The sequence is completed, ignoring";
+-    //     return {};
+-    // }
+-
+-    // auto chineseCharsCount = firstAlphabeticIndex;
+-
+-    // m_convertedChars = preeditString.mid(0, chineseCharsCount);
+-
+-    // auto adjustedString = preeditString.mid(chineseCharsCount);
+-
+-    resetSequence();
+-
+-    auto pinyinLength = pinyin_parse_more_full_pinyins(m_instance, preeditString.toUtf8().data());
+-
+-    if (!pinyinLength) { return {}; }
+-
+-    QStringList seq;
+-
+-    std::copy(
+-        PinyinSequenceIterator(m_instance, 0),
+-        PinyinSequenceIterator(m_instance, pinyinLength),
+-        std::back_inserter(seq));
+-
+-    qCDebug(Pinyin) << "current sequence is" << seq;
+-
+-    return seq;
+-}
+-
+-void PinyinAdapter::resetSequence()
+-{
+-    m_offset = 0;
+-    m_convertedChars.clear();
+-}
+-
+-void PinyinAdapter::genCandidatesForCurrentSequence(const QString &string, UpdateCandidateListStrategy strategy)
+-{
+-    pinyin_guess_candidates(m_instance, m_offset, SORT_BY_PHRASE_LENGTH_AND_PINYIN_LENGTH_AND_FREQUENCY);
+-
+-    candidates.clear();
+-
+-    auto maybePartiallyConvertedSeq = m_convertedChars + remainingChars();
+-
+-    candidates.append(maybePartiallyConvertedSeq);
+-
+-    guint len = 0;
+-    pinyin_get_n_candidate(m_instance, &len);
+-    len = len > MAX_SUGGESTIONS ? MAX_SUGGESTIONS : len;
+-    for (unsigned int i = 0 ; i < len; i ++ )
+-    {
+-        lookup_candidate_t * candidate = nullptr;
+-
+-        if (pinyin_get_candidate(m_instance, i, &candidate)) {
+-            const char* word = nullptr;
+-            pinyin_get_candidate_string(m_instance, candidate, &word);
+-            // Translate the token to utf-8 phrase.
+-            if (word) {
+-                candidates.append(QString(word));
+-            }
+-        }
+-    }
+-
+-    qCDebug(Pinyin) << "current string is" << string;
+-    qCDebug(Pinyin) << "candidates are" << candidates;
+-    Q_EMIT newPredictionSuggestions(string, candidates, strategy);
+-}
+-
+-QStringList PinyinAdapter::remainingSequence() const
+-{
+-    return m_currentSequence.mid(m_convertedChars.size());
+-}
+-
+-QString PinyinAdapter::remainingChars() const
+-{
+-    return m_preedit.mid(m_offset);
+-}
+diff --git a/plugins/pinyin/src/pinyinadapter.h b/plugins/pinyin/src/pinyinadapter.h
+deleted file mode 100644
+index 83d29541..00000000
+--- a/plugins/pinyin/src/pinyinadapter.h
++++ /dev/null
+@@ -1,83 +0,0 @@
+-/*
+- * Copyright 2013 Canonical Ltd.
+- *
+- * This program is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as published by
+- * the Free Software Foundation; version 3.
+- *
+- * This program is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+- */
+-
+-#ifndef PINYINADAPTER_H
+-#define PINYINADAPTER_H
+-
+-#include <QObject>
+-#include <QStringList>
+-
+-#include "pinyin.h"
+-#include "abstractlanguageplugin.h"
+-
+-class PinyinAdapter : public QObject
+-{
+-    Q_OBJECT
+-
+-    QStringList candidates;
+-
+-    pinyin_context_t*  m_context;
+-    pinyin_instance_t* m_instance;
+-
+-    bool m_processingWords;
+-    QStringList m_currentSequence;
+-    QString m_convertedChars;
+-    QString m_preedit;
+-    std::size_t m_offset{};
+-
+-public:
+-    explicit PinyinAdapter(QObject *parent = nullptr);
+-    ~PinyinAdapter() override;
+-
+-signals:
+-    void newPredictionSuggestions(QString, QStringList, int strategy = UpdateCandidateListStrategy::ClearWhenNeeded);
+-    /*!
+-     * \brief Signals that the whole Pinyin sequence is converted
+-     * to Chinese characters.
+-     *
+-     * \param text The converted Chinese characters.
+-     */
+-    void completed(const QString &text);
+-
+-public slots:
+-    void parse(const QString& string);
+-    void wordCandidateSelected(const QString& word);
+-    void reset();
+-
+-private:
+-    /*!
+-     * \brief Obtain the current pinyin sequence from preedit string.
+-     */
+-    QStringList getCurrentPinyinSequence(const QString &preeditString);
+-
+-    /*!
+-     * \brief Reset the current pinyin sequence.
+-     */
+-    void resetSequence();
+-
+-    /*!
+-     * \brief Get the candidates for the current pinyin sequence.
+-     *
+-     * This functions emits newPredictionSuggestions().
+-     */
+-    void genCandidatesForCurrentSequence(const QString &preedit, UpdateCandidateListStrategy strategy = UpdateCandidateListStrategy::ClearWhenNeeded);
+-
+-    QStringList remainingSequence() const;
+-    QString remainingChars() const;
+-};
+-
+-
+-#endif // PINYINADAPTER_H
+diff --git a/plugins/pinyin/src/pinyinplugin.cpp b/plugins/pinyin/src/pinyinplugin.cpp
+deleted file mode 100644
+index 50d51db6..00000000
+--- a/plugins/pinyin/src/pinyinplugin.cpp
++++ /dev/null
+@@ -1,58 +0,0 @@
+-#include "pinyinplugin.h"
+-#include "chineselanguagefeatures.h"
+-
+-#include <QDebug>
+-
+-PinyinPlugin::PinyinPlugin(QObject *parent) :
+-    AbstractLanguagePlugin(parent)
+-  , m_chineseLanguageFeatures(new ChineseLanguageFeatures)
+-  , m_processingWord(false)
+-{
+-    m_pinyinThread = new QThread();
+-    m_pinyinAdapter = new PinyinAdapter();
+-    m_pinyinAdapter->moveToThread(m_pinyinThread);
+-
+-    connect(m_pinyinAdapter, &PinyinAdapter::newPredictionSuggestions, this, &PinyinPlugin::finishedProcessing);
+-    connect(this, &PinyinPlugin::parsePredictionText, m_pinyinAdapter, &PinyinAdapter::parse);
+-    connect(this, &PinyinPlugin::candidateSelected, m_pinyinAdapter, &PinyinAdapter::wordCandidateSelected);
+-    connect(m_pinyinAdapter, &PinyinAdapter::completed, this, &AbstractLanguagePlugin::commitTextRequested);
+-    m_pinyinThread->start();
+-}
+-
+-PinyinPlugin::~PinyinPlugin()
+-{
+-    m_pinyinAdapter->deleteLater();
+-    m_pinyinThread->quit();
+-    m_pinyinThread->wait();
+-}
+-
+-void PinyinPlugin::predict(const QString& surroundingLeft, const QString& preedit)
+-{
+-    Q_UNUSED(surroundingLeft);
+-    m_nextWord = preedit;
+-    if (!m_processingWord) {
+-        m_processingWord = true;
+-        Q_EMIT parsePredictionText(preedit);
+-    }
+-}
+-
+-void PinyinPlugin::wordCandidateSelected(QString word)
+-{
+-    qDebug() << "Pinyin plugin: selecting word " << word;
+-    Q_EMIT candidateSelected(word);
+-}
+-
+-AbstractLanguageFeatures* PinyinPlugin::languageFeature()
+-{
+-    return m_chineseLanguageFeatures;
+-}
+-
+-void PinyinPlugin::finishedProcessing(QString word, QStringList suggestions, int strategy)
+-{
+-    Q_EMIT newPredictionSuggestions(word, suggestions, strategy);
+-    if (word != m_nextWord) {
+-        Q_EMIT parsePredictionText(word);
+-    } else {
+-        m_processingWord = false;
+-    }
+-}
+diff --git a/plugins/pinyin/src/pinyinplugin.h b/plugins/pinyin/src/pinyinplugin.h
+deleted file mode 100644
+index 7444a374..00000000
+--- a/plugins/pinyin/src/pinyinplugin.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#ifndef PINYINPLUGIN_H
+-#define PINYINPLUGIN_H
+-
+-#include <QObject>
+-#include <QStringList>
+-#include <QThread>
+-#include "languageplugininterface.h"
+-#include "abstractlanguageplugin.h"
+-
+-#include "pinyinadapter.h"
+-#include <iostream>
+-
+-class ChineseLanguageFeatures;
+-
+-class PinyinPlugin : public AbstractLanguagePlugin
+-{
+-    Q_OBJECT
+-    Q_PLUGIN_METADATA(IID "io.maliit.keyboard.LanguagePlugin.1" FILE "pinyinplugin.json")
+-    Q_INTERFACES(LanguagePluginInterface)
+-
+-public:
+-    explicit PinyinPlugin(QObject *parent = nullptr);
+-    ~PinyinPlugin() override;
+-
+-    void predict(const QString& surroundingLeft, const QString& preedit) override;
+-    void wordCandidateSelected(QString word) override;
+-
+-    AbstractLanguageFeatures* languageFeature() override;
+-
+-    //! spell checker
+-    void spellCheckerSuggest(const QString& word, int limit) override { Q_UNUSED(word); Q_UNUSED(limit); }
+-    void addToSpellCheckerUserWordList(const QString& word) override { Q_UNUSED(word); }
+-    bool setLanguage(const QString& languageId, const QString& pluginPath) override { Q_UNUSED(languageId); Q_UNUSED(pluginPath); return false; }
+-
+-signals:
+-    void parsePredictionText(QString preedit);
+-    void candidateSelected(QString word);
+-
+-public slots:
+-    void finishedProcessing(QString word, QStringList suggestions, int strategy = UpdateCandidateListStrategy::ClearWhenNeeded);
+-
+-private:
+-    QThread *m_pinyinThread;
+-    PinyinAdapter *m_pinyinAdapter;
+-    ChineseLanguageFeatures* m_chineseLanguageFeatures;
+-    QString m_nextWord;
+-    bool m_processingWord;
+-};
+-
+-#endif // PINYINPLUGIN_H
+diff --git a/plugins/pinyin/src/pinyinplugin.json b/plugins/pinyin/src/pinyinplugin.json
+deleted file mode 100644
+index 39cedcaf..00000000
+--- a/plugins/pinyin/src/pinyinplugin.json
++++ /dev/null
+@@ -1,5 +0,0 @@
+-{
+-    "IID": "io.maliit.keyboard.LanguagePlugin.1",
+-    "LanguageId": "zh-hans",
+-    "Language": "Chinese (Pinyin)"
+-}
+\ No newline at end of file
+diff --git a/qml/keys/languages.js b/qml/keys/languages.js
+index 89fcc0cd..6ba793a9 100644
+--- a/qml/keys/languages.js
++++ b/qml/keys/languages.js
+@@ -57,8 +57,6 @@ function languageIdToName(languageId)
+     if (languageId == "th")         return Gettext.qsTr("Thai");
+     if (languageId == "tr")         return Gettext.qsTr("Turkish");
+     if (languageId == "uk")         return Gettext.qsTr("Ukrainian");
+-    if (languageId == "zh-hans")         return Gettext.qsTr("Chinese\n(Pinyin)");
+-    if (languageId == "zh-hant")         return Gettext.qsTr("Chinese\n(Chewing)");
+ 
+     // fallback
+     return languageId.charAt(0).toUpperCase() + languageId.slice(1);
+-- 
+2.36.1
+
