@@ -16,7 +16,7 @@ EXTRA_OECMAKE += " -Denable-xcb=off"
 EXTRA_OECMAKE += " -Denable-docs=OFF"
 EXTRA_OECMAKE += " -Denable-dbus-activation=ON"
 EXTRA_OECMAKE += " -Denable-glib=OFF"
-EXTRA_OECMAKE += " -DQT5_PLUGINS_INSTALL_DIR=lib/qt/plugins"
+EXTRA_OECMAKE += " -DQT5_PLUGINS_INSTALL_DIR=lib/plugins"
 EXTRA_OECMAKE += " -DQT5_MKSPECS_INSTALL_DIR=lib/qt/mkspecs"
 EXTRA_OECMAKE += " -DMALIIT_INSTALL_PRF=${OE_QMAKE_PATH_QT_ARCHDATA}/mkspecs/features"
 
@@ -27,7 +27,7 @@ EXTRA_OECMAKE += " -DMALIIT_PLUGINS_DATA_DIR=${datadir}"
 DEPENDS += "qtdeclarative qtwayland qtwayland-native qttools-native qtbase-native"
 
 FILES:${PN} += "\
-    ${libdir}/qt/plugins/ \
+    ${libdir}/plugins/ \
     ${bindir} \
     ${datadir}/dbus-1 \
     ${OE_QMAKE_PATH_PLUGINS}/platforminputcontexts \
