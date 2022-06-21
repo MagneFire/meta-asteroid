@@ -6,6 +6,7 @@ IMAGE_FEATURES += "package-management debug-tweaks"
 
 IMAGE_INSTALL += " \
 kernel-modules base-files base-passwd systemd busybox iproute2 connman pam-plugin-loginuid bluez5 pulseaudio-server openssh-sshd openssh-sftp-server openssh-scp dsme mce ngfd timed sensorfw android-init resize-rootfs mapplauncherd-booster-qtcomponents usb-moded ofono \
+maliit-framework maliit-keyboard qtquickcontrols2 \
 ${@oe.utils.conditional('MACHINE_HAS_WLAN', 'true', 'iproute2 wpa-supplicant connman-client', '', d)} \
 qtgraphicaleffects-qmlplugins supported-languages ttf-asteroid-fonts asteroid-launcher asteroid-calculator asteroid-calendar asteroid-stopwatch asteroid-settings asteroid-timer asteroid-alarmclock asteroid-weather asteroid-music asteroid-btsyncd asteroid-flashlight asteroid-diamonds"
 
