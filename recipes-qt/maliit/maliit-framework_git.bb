@@ -4,7 +4,9 @@ HOMEPAGE = "https://wiki.maliit.org/Main_Page"
 LICENSE = "LGPL-2.1-only"
 LIC_FILES_CHKSUM = "file://LICENSE.LGPL;md5=5c917f6ce94ceb8d8d5e16e2fca5b9ad"
 
-SRC_URI = "git://github.com/maliit/framework.git;branch=master;protocol=https"
+SRC_URI = "git://github.com/maliit/framework.git;branch=master;protocol=https \
+    file://maliit-server.service \
+    file://org.maliit.server.service"
 SRCREV = "2.2.1"
 PR = "r1"
 PV = "+git${SRCPV}"
@@ -26,11 +28,20 @@ EXTRA_OECMAKE += " -DMALIIT_PLUGINS_DATA_DIR=${datadir}"
 
 DEPENDS += "qtdeclarative qtwayland qtwayland-native qttools-native qtbase-native"
 
+do_install:append() {
+    install -d ${D}/usr/lib/systemd/user/
+    install -m 644 ${WORKDIR}/maliit-server.service ${D}/usr/lib/systemd/user/
+
+    install -d ${D}/usr/share/dbus-1/services/
+    install -m 644 ${WORKDIR}/org.maliit.server.service ${D}/usr/share/dbus-1/services/
+}
+
 FILES:${PN} += "\
     ${libdir}/plugins/ \
     ${bindir} \
     ${datadir}/dbus-1 \
     ${OE_QMAKE_PATH_PLUGINS}/platforminputcontexts \
+    ${libdir}/systemd/user/maliit-server.service \
 "
 
 FILES:${PN}-dev += "\
