@@ -31,10 +31,10 @@ do_configure:prepend() {
 }
 
 do_install:append() {
-    install -d ${D}/etc/sensorfw/ ${D}/lib/systemd/system/multi-user.target.wants/
+    install -d ${D}/etc/sensorfw/ ${D}${systemd_system_unitdir}/multi-user.target.wants/
     cp ${S}/config/sensord-hybris.conf ${D}/etc/sensorfw/primaryuse.conf
-    cp ../sensorfwd.service ${D}/lib/systemd/system/sensorfwd.service
-    ln -s ../sensorfwd.service ${D}/lib/systemd/system/multi-user.target.wants/
+    cp ../sensorfwd.service ${D}${systemd_system_unitdir}/sensorfwd.service
+    ln -s ../sensorfwd.service ${D}${systemd_system_unitdir}/multi-user.target.wants/
 }
 
 DEPENDS += "qtbase"
