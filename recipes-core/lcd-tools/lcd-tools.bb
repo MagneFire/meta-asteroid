@@ -4,13 +4,14 @@ LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=1ebbd3e34237af26da5dc08a4e440464"
 
 SRC_URI = "git://github.com/AsteroidOS/lcd-tools.git;branch=main;protocol=https"
-SRCREV = "${AUTOREV}"
-PR = "r0"
+SRCREV = "964a4134ec60081ce441050a98f5bc863fb2e777"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 DEPENDS = "libhybris cli11 mlite qtbase"
 inherit cmake_qt5 pkgconfig
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 do_install:append() {
     install -d ${D}/usr/lib/systemd/user/
