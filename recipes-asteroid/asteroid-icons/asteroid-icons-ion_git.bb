@@ -9,6 +9,8 @@ PR = "r1"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 
+UPSTREAM_CHECK_COMMITS = "1"
+
 do_install() {
     install -d ${D}/usr/share/icons/asteroid/
     cp ${S}/src/* ${D}/usr/share/icons/asteroid/
