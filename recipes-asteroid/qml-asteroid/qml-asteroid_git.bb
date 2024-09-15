@@ -5,11 +5,12 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=1702a92c723f09e3fab3583b165a8d90"
 
 SRC_URI = "git://github.com/AsteroidOS/qml-asteroid.git;protocol=https;branch=master"
 SRC_URI:append:qemux86 = " file://0001-Spinners-Disable-shaders-which-cause-all-sorts-of-pr.patch"
-SRCREV = "${AUTOREV}"
-PR = "r1"
+SRCREV = "f0ba477a62d88f10cf2420255ec3747792b73c97"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 inherit cmake_qt5 pkgconfig
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 DEPENDS += "extra-cmake-modules qtdeclarative qtsvg qtvirtualkeyboard mlite mapplauncherd-booster-qtcomponents qtdeclarative-native"
 RDEPENDS:${PN} += "asteroid-machine-config qtsvg-plugins qtvirtualkeyboard asteroid-icons-ion"
