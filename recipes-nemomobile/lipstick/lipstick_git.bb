@@ -9,7 +9,10 @@ SRC_URI = "git://github.com/AsteroidOS/lipstick.git;protocol=https;branch=master
     file://0003-Disable-USB-mode-notifications-on-connect.patch \
     file://0004-ScreenshotService-Use-system-bus-to-workaround-the-s.patch \
     file://0005-BluetoothAgent-Advertise-less-hardware-capabilities-.patch \
-    file://Notifications/"
+    file://Notifications/notifications.db \
+    file://Notifications/notifications.db-shm \
+    file://Notifications/notifications.db-wal \
+"
 SRCREV = "${AUTOREV}"
 PR = "r1"
 PV = "+git${SRCPV}"
@@ -31,7 +34,9 @@ do_install:append() {
     cp -r *.qm ${D}/usr/share/translations/
 
     install -d ${D}/home/ceres/.local/share/system/privileged/Notifications/
-    cp -r ${WORKDIR}/Notifications/* ${D}/home/ceres/.local/share/system/privileged/Notifications/
+    cp -r ${WORKDIR}/notifications.db ${D}/home/ceres/.local/share/system/privileged/Notifications/
+    cp -r ${WORKDIR}/notifications.db-shm ${D}/home/ceres/.local/share/system/privileged/Notifications/
+    cp -r ${WORKDIR}/notifications.db-wal ${D}/home/ceres/.local/share/system/privileged/Notifications/
 }
 
 FILES:${PN} += "/usr/lib/qml/org/nemomobile/lipstick/liblipstickplugin.so /usr/lib/qml/org/nemomobile/lipstick/qmldir /usr/share/icons/hicolor/86x86/apps/ /home/ceres/.local/share/system/privileged/Notifications"
