@@ -1,0 +1,68 @@
+#!/bin/bash
+
+declare -a recipes=(
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-alarmclock_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-calculator_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-calendar_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-camera_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-compass_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-diamonds_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-flashlight_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-gps-test_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-helloworld_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-hrm_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-music_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-settings_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-stopwatch_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-timer_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-apps/asteroid-weather_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-btsyncd/asteroid-btsyncd_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-icons/asteroid-icons-ion_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-launcher/asteroid-launcher_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-sounds/asteroid-sounds_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-virtualkeyboard/asteroid-virtualkeyboard_git.bb"
+    "meta-asteroid recipes-asteroid/asteroid-wallpapers/asteroid-wallpapers_git.bb"
+    "meta-asteroid recipes-asteroid/qml-asteroid/asteroid-generate-desktop-native_git.bb"
+    "meta-asteroid recipes-asteroid/qml-asteroid/qml-asteroid_git.bb"
+    "meta-asteroid recipes-asteroid/supported-languages/supported-languages_git.bb"
+    "meta-asteroid recipes-core/lcd-tools/lcd-tools.bb"
+    "meta-asteroid recipes-graphics/ttf-fonts/ttf-asteroid-fonts_git.bb"
+    "meta-asteroid recipes-nemomobile/lipstick/lipstick_git.bb"
+)
+
+script_dir=$(dirname "$0") 
+repo_dir="$script_dir/../"
+
+function get_recipe_name {
+    full_path=$1
+    # Remove filename suffix (_git.bb, .bb)
+    recipe_name=`basename $full_path | sed -e 's/_.*//g' -e 's/.bb//g'`
+    echo $recipe_name
+}
+
+function update_recipe {
+    recipe_name=$(get_recipe_name $2)
+    echo "Updating $recipe_name..."
+    devtool upgrade $recipe_name
+
+    log=$(git -C workspace/sources/$recipe_name log --format='format:  > %s' devtool-orig...devtool)
+
+    devtool finish $recipe_name $1
+
+    git -C $repo_dir add $2
+    git -C $repo_dir commit -m "$recipe_name: Bump SRCREV" -m "$log" > /dev/null
+}
+
+function update_recipes {
+    for l in "${recipes[@]}"; do
+        if [ -n "$ZSH_VERSION" ]; then
+            read -A layer <<< "$l"
+        else
+            read -a layer <<< "$l"
+        fi
+
+        update_recipe ${layer[@]:0:1} ${layer[@]:1:1}
+    done
+}
+
+update_recipes
