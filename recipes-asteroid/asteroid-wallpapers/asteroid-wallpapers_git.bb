@@ -4,10 +4,11 @@ LICENSE = "CC-BY-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE_CCBY;md5=e5ae8a8ac3605e6baffcd72982f4703b"
 
 SRC_URI = "git://github.com/AsteroidOS/asteroid-wallpapers;protocol=https;branch=master"
-SRCREV = "${AUTOREV}"
-PR = "r1"
+SRCREV = "3cd501b96343f97de4e26f847351ea0555ccce55"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 do_install() {
     install -d ${D}/usr/share/asteroid-launcher/wallpapers/
