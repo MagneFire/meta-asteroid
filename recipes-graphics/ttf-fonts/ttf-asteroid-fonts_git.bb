@@ -16,6 +16,8 @@ PR = "r1"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 
+UPSTREAM_CHECK_COMMITS = "1"
+
 FONT_PACKAGES = "ttf-asteroid-fonts"
 
 do_install() {
