@@ -6,10 +6,11 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=65d3616852dbf7b1a6d4b53b00626032"
 SRC_URI = "git://github.com/AsteroidOS/supported-languages.git;protocol=https;branch=master \
     file://locale.conf \
     file://localeEnv.conf"
-SRCREV = "${AUTOREV}"
-PR = "r1"
+SRCREV = "162f8cffeae4af2ddfd8f74efd3e2f8a04d455a5"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 RDEPENDS:${PN} += "source-han-sans-cn-fonts source-han-sans-kr-fonts ttf-lohit ttf-dejavu-sans"
 
