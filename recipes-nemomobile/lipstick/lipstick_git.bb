@@ -9,13 +9,14 @@ SRC_URI = "git://github.com/AsteroidOS/lipstick.git;protocol=https;branch=master
     file://0003-Disable-USB-mode-notifications-on-connect.patch \
     file://0004-ScreenshotService-Use-system-bus-to-workaround-the-s.patch \
     file://0005-BluetoothAgent-Advertise-less-hardware-capabilities-.patch \
-    file://Notifications/"
-SRCREV = "${AUTOREV}"
-PR = "r1"
+    file://Notifications/notifications.db"
+SRCREV = "ee92a6f9d90bf0b22d462195e09b42dff5446756"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 DEPENDS += "timed qtbase qtsensors qtdeclarative qtwayland mlite dbus dbus-glib libresourceqt qtsystems libngf-qt mce usb-moded-qt5 systemd wayland nemo-keepalive qttools-native mce-qt5"
 RDEPENDS:${PN} += "${PN}-locale"
@@ -31,7 +32,7 @@ do_install:append() {
     cp -r *.qm ${D}/usr/share/translations/
 
     install -d ${D}/home/ceres/.local/share/system/privileged/Notifications/
-    cp -r ${WORKDIR}/Notifications/* ${D}/home/ceres/.local/share/system/privileged/Notifications/
+    cp -r ${WORKDIR}/Notifications/notifications.db ${D}/home/ceres/.local/share/system/privileged/Notifications/
 }
 
 FILES:${PN} += "/usr/lib/qml/org/nemomobile/lipstick/liblipstickplugin.so /usr/lib/qml/org/nemomobile/lipstick/qmldir /usr/share/icons/hicolor/86x86/apps/ /home/ceres/.local/share/system/privileged/Notifications"
