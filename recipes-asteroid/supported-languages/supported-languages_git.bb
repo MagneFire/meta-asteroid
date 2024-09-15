@@ -11,6 +11,8 @@ PR = "r1"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 
+UPSTREAM_CHECK_COMMITS = "1"
+
 RDEPENDS:${PN} += "source-han-sans-cn-fonts source-han-sans-kr-fonts ttf-lohit ttf-dejavu-sans"
 
 FILES:${PN} += "/etc/systemd/system/user@.service.d/ /usr/lib/systemd/user/ /usr/share/supported-languages/ /home/.system/var/lib/environment/1000"
