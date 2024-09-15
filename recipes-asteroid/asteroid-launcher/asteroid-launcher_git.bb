@@ -4,14 +4,17 @@ LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://src/qml/MainScreen.qml;beginline=1;endline=29;md5=3d250dd089f5d6221d9054029963e332"
 
 SRC_URI = "git://github.com/AsteroidOS/asteroid-launcher.git;protocol=https;branch=master \
-    file://asteroid-launcher.service \
-    file://asteroid-launcher-precondition"
+           file://asteroid-launcher.service \
+           file://asteroid-launcher-precondition \
+           file://asteroid-launcher-precondition-hybris \
+           "
 SRC_URI:append:hybris-machine = " file://asteroid-launcher-precondition-hybris "
-SRCREV = "${AUTOREV}"
-PR = "r1"
+SRCREV = "a28a156ce2957e1a625ba6de015bcfef56f65852"
 PV = "+git${SRCPV}"
 S = "${WORKDIR}/git"
 inherit cmake_qt5 pkgconfig
+
+UPSTREAM_CHECK_COMMITS = "1"
 
 DEPENDS += "qml-asteroid lipstick qttools-native timed"
 RDEPENDS:${PN} += "qtdeclarative-qmlplugins qml-asteroid mce-qt5 qtwayland-plugins nemo-qml-plugin-time nemo-qml-plugin-configuration asteroid-wallpapers asteroid-launcher-configs"
