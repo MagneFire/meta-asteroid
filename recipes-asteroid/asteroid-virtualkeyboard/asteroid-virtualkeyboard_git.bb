@@ -8,6 +8,8 @@ SRCREV = "${AUTOREV}"
 PV = "1.0+git${SRCPV}"
 S = "${WORKDIR}/git"
 
+UPSTREAM_CHECK_COMMITS = "1"
+
 inherit cmake_qt5 
 
 DEPENDS += "qml-asteroid qttools-native qtdeclarative-native"
