@@ -4,7 +4,7 @@ LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=84dcc94da3adb52b53ae4fa38fe49e5d"
 
 SRC_URI = "git://github.com/AsteroidOS/asteroid-compass.git;protocol=https;branch=master"
-SRCREV = "${AUTOREV}"
+SRCREV = "ec238fc6470d20890c6498b76554e8165428f853"
 
 require asteroid-app.inc
 
