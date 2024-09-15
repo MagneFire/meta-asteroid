@@ -12,6 +12,8 @@ DEPENDS = "libhybris cli11 mlite qtbase"
 inherit cmake_qt5 pkgconfig
 PACKAGE_ARCH = "${MACHINE_ARCH}"
 
+UPSTREAM_CHECK_COMMITS = "1"
+
 do_install:append() {
     install -d ${D}/usr/lib/systemd/user/
     install -d ${D}/usr/lib/systemd/user/default.target.wants/
