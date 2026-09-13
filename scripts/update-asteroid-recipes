@@ -1,0 +1,257 @@
+#!/usr/bin/env python3
+"""Pin AsteroidOS git recipes to the latest upstream commit.
+
+For every recipe listed in RECIPE_GROUPS the script looks up the tip of the
+branch named in SRC_URI, rewrites SRCREV to that commit and rewrites PV to
+
+    PV = "<latest tag>+<commits since that tag>+git"
+
+so that package versions always increase (bitbake and opkg compare the
+numeric fields before the git hash that gets appended to PKGV). Without this
+the package version would only contain "+git0+<hash>", which does not sort
+and trips buildhistory's version-going-backwards check on the build server.
+
+Only git and Python 3 are needed; no bitbake environment is required, so the
+script runs on a developer machine as well as in CI.
+
+    scripts/update-asteroid-recipes                 # bump everything
+    scripts/update-asteroid-recipes --dry-run       # show what would change
+    scripts/update-asteroid-recipes --recipe asteroid-weather --no-commit
+    scripts/update-asteroid-recipes --layer ../meta-asteroid-community
+
+One commit is created per group; groups with a name get a single
+"<group>: Bump SRCREVs" commit, recipes in the unnamed group get a
+"<recipe>: Bump SRCREV to <hash>" commit each.
+"""
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+# Per layer (BBFILE_COLLECTIONS name in conf/layer.conf): list of
+# (group name or None, [recipe files relative to the layer]).
+RECIPE_GROUPS = {
+    "asteroid-layer": [
+        ("asteroid-apps", [
+            "recipes-asteroid/asteroid-apps/asteroid-alarmclock_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-calculator_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-calendar_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-camera_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-compass_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-diamonds_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-flashlight_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-gps-test_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-helloworld_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-hrm_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-music_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-settings_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-stopwatch_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-timer_git.bb",
+            "recipes-asteroid/asteroid-apps/asteroid-weather_git.bb",
+        ]),
+        (None, [
+            "recipes-asteroid/asteroid-btsyncd/asteroid-btsyncd_git.bb",
+            "recipes-asteroid/asteroid-icons/asteroid-icons-ion_git.bb",
+            "recipes-asteroid/asteroid-launcher/asteroid-launcher_git.bb",
+            "recipes-asteroid/asteroid-sounds/asteroid-sounds_git.bb",
+            "recipes-asteroid/asteroid-wallpapers/asteroid-wallpapers_git.bb",
+            "recipes-asteroid/qml-asteroid/asteroid-generate-desktop-native_git.bb",
+            "recipes-asteroid/qml-asteroid/qml-asteroid_git.bb",
+            "recipes-asteroid/supported-languages/supported-languages_git.bb",
+        ]),
+    ],
+    "asteroid-community-layer": [
+        ("unofficial-watchfaces", [
+            "recipes-watchfaces/unofficial-watchfaces/unofficial-watchface.inc",
+            "recipes-watchfaces/unofficial-watchfaces/unofficial-watchface-common_git.bb",
+        ]),
+    ],
+}
+
+SRC_URI_RE = re.compile(
+    r'git://(?P<host>[^/;\s"]+)/(?P<path>[^;\s"]+?)(?:\.git)?;(?P<params>[^"]*?branch=(?P<branch>[^;\s"]+)[^"]*)')
+SRCREV_RE = re.compile(r'^SRCREV\s*=\s*"(?P<rev>[^"]*)"[ \t]*$', re.M)
+PV_RE = re.compile(r'^PV\s*=\s*"(?P<pv>[^"]*)"[ \t]*$', re.M)
+PV_SCHEME_RE = re.compile(r'^(?P<tag>\d[\w.]*)\+(?P<count>\d+)\+git$')
+DESCRIBE_RE = re.compile(r'^(?P<tag>.+)-(?P<count>\d+)-g[0-9a-f]+$')
+
+
+def git(*args, cwd=None):
+    proc = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed:\n{proc.stderr.strip()}")
+    return proc.stdout.strip("\n")
+
+
+def recipe_name(path):
+    return re.sub(r'(_[^_/]*)?\.(bb|inc)$', '', os.path.basename(path))
+
+
+def layer_collection(layer):
+    conf = os.path.join(layer, "conf", "layer.conf")
+    with open(conf) as f:
+        m = re.search(r'^BBFILE_COLLECTIONS\s*\+?=\s*"\s*([\w-]+)\s*"', f.read(), re.M)
+    if not m:
+        sys.exit(f"error: cannot find BBFILE_COLLECTIONS in {conf}")
+    return m.group(1)
+
+
+def version_key(tag, count):
+    return tuple(int(x) if x.isdigit() else x for x in re.split(r'[.+]', tag)), count
+
+
+class Upstream:
+    """A bare, treeless clone of one branch of one repository."""
+
+    def __init__(self, url, branch, tmpdir):
+        self.url = url
+        self.branch = branch
+        self.dir = os.path.join(tmpdir, re.sub(r'\W', '_', f"{url}_{branch}"))
+        self.head = git("ls-remote", url, f"refs/heads/{branch}").split()[0]
+        self._cloned = False
+
+    def clone(self):
+        if not self._cloned:
+            git("clone", "--quiet", "--bare", "--filter=tree:0",
+                "--branch", self.branch, self.url, self.dir)
+            self.head = git("rev-parse", self.branch, cwd=self.dir)
+            self._cloned = True
+
+    def version(self, rev):
+        """Return (tag, commits since tag) for rev; tag "0.0" if none."""
+        self.clone()
+        try:
+            desc = git("describe", "--tags", "--long", "--match", "[0-9]*", rev, cwd=self.dir)
+        except RuntimeError:
+            return "0.0", int(git("rev-list", "--count", rev, cwd=self.dir))
+        m = DESCRIBE_RE.match(desc)
+        return m.group("tag"), int(m.group("count"))
+
+    def shortlog(self, old, new):
+        self.clone()
+        try:
+            return git("log", "--no-merges", "--format=  > %s", f"{old}..{new}", cwd=self.dir)
+        except RuntimeError:
+            return ""
+
+
+class Recipe:
+    def __init__(self, layer, relpath):
+        self.relpath = relpath
+        self.path = os.path.join(layer, relpath)
+        self.name = recipe_name(relpath)
+        with open(self.path) as f:
+            self.text = f.read()
+        m = SRC_URI_RE.search(self.text)
+        if not m:
+            sys.exit(f"error: {relpath}: no git SRC_URI with a branch= parameter")
+        self.url = f"https://{m.group('host')}/{m.group('path')}.git"
+        self.branch = m.group("branch")
+        m = SRCREV_RE.search(self.text)
+        if not m:
+            sys.exit(f"error: {relpath}: no SRCREV line")
+        self.old_rev = m.group("rev")
+        m = PV_RE.search(self.text)
+        self.old_pv = m.group("pv") if m else None
+        self.new_rev = None
+        self.new_pv = None
+
+    @property
+    def pinned(self):
+        return re.fullmatch(r'[0-9a-f]{40}', self.old_rev) is not None
+
+    def plan(self, upstream):
+        if self.pinned and self.old_rev == upstream.head:
+            return False
+        upstream.clone()
+        tag, count = upstream.version(upstream.head)
+        self.new_rev = upstream.head
+        self.new_pv = f"{tag}+{count}+git"
+        m = PV_SCHEME_RE.match(self.old_pv or "")
+        if m and version_key(tag, count) < version_key(m.group("tag"), int(m.group("count"))):
+            sys.exit(f"error: {self.relpath}: new version {self.new_pv} sorts below the "
+                     f"current {self.old_pv} (upstream history rewritten?); refusing to downgrade")
+        return True
+
+    def write(self):
+        text = SRCREV_RE.sub(f'SRCREV = "{self.new_rev}"', self.text, count=1)
+        pv_line = f'PV = "{self.new_pv}"'
+        if self.old_pv is not None:
+            text = PV_RE.sub(pv_line, text, count=1)
+        else:
+            text = re.sub(r'^(SRCREV\s*=.*)$', lambda m: f"{m.group(1)}\n{pv_line}", text, count=1, flags=re.M)
+        with open(self.path, "w") as f:
+            f.write(text)
+
+    def describe_change(self, upstream):
+        old = self.old_rev[:7] if self.pinned else self.old_rev
+        head = f"{self.name}: {old} -> {self.new_rev[:7]} ({self.old_pv or "unversioned"} -> {self.new_pv})"
+        log = upstream.shortlog(self.old_rev, self.new_rev) if self.pinned else ""
+        return head + ("\n" + log if log else "")
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    default_layer = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ap.add_argument("--layer", default=default_layer,
+                    help="layer directory to update (default: the layer containing this script)")
+    ap.add_argument("--recipe", action="append", metavar="NAME",
+                    help="only update this recipe (repeatable)")
+    ap.add_argument("--dry-run", action="store_true", help="only report what would change")
+    ap.add_argument("--no-commit", action="store_true", help="modify the recipes but do not commit")
+    args = ap.parse_args()
+
+    layer = os.path.abspath(args.layer)
+    collection = layer_collection(layer)
+    if collection not in RECIPE_GROUPS:
+        sys.exit(f"error: no recipe list for layer collection '{collection}'")
+
+    changed_any = False
+    with tempfile.TemporaryDirectory(prefix="update-asteroid-recipes-") as tmpdir:
+        upstreams = {}
+        for group, relpaths in RECIPE_GROUPS[collection]:
+            changed = []
+            for relpath in relpaths:
+                recipe = Recipe(layer, relpath)
+                if args.recipe and recipe.name not in args.recipe:
+                    continue
+                key = (recipe.url, recipe.branch)
+                if key not in upstreams:
+                    upstreams[key] = Upstream(recipe.url, recipe.branch, tmpdir)
+                upstream = upstreams[key]
+                if not recipe.plan(upstream):
+                    print(f"{recipe.name}: up to date at {recipe.old_rev[:7]} ({recipe.old_pv})")
+                    continue
+                changed.append((recipe, upstream))
+                print(recipe.describe_change(upstream))
+            if not changed:
+                continue
+            changed_any = True
+            if args.dry_run:
+                continue
+            for recipe, _ in changed:
+                recipe.write()
+            if args.no_commit:
+                continue
+            if group:
+                commits = [(f"{group}: Bump SRCREVs", changed)]
+            else:
+                commits = [(f"{r.name}: Bump SRCREV to {r.new_rev[:7]}", [(r, u)]) for r, u in changed]
+            for subject, items in commits:
+                body = "\n\n".join(r.describe_change(u) for r, u in items)
+                git("add", "--", *[r.relpath for r, _ in items], cwd=layer)
+                git("commit", "--quiet", "-m", subject, "-m", body, cwd=layer)
+                print(f"committed: {subject}")
+
+    if not changed_any:
+        print("nothing to do")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except RuntimeError as e:
+        sys.exit(f"error: {e}")
