@@ -4,7 +4,8 @@ LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=84dcc94da3adb52b53ae4fa38fe49e5d"
 
 SRC_URI = "git://github.com/AsteroidOS/asteroid-camera.git;protocol=https;branch=master"
-SRCREV = "${AUTOREV}"
+SRCREV = "53c3e636a4f71b05950d125b622cfd8876985fc9"
+PV = "2.1+6+git"
 
 REMOVE_TRANSLATIONS = "1"
 
