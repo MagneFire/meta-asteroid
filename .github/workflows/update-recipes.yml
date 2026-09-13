@@ -1,0 +1,43 @@
+# Pin the AsteroidOS recipes to the latest upstream commits.
+#
+# Runs every Thursday at noon UTC, half a day before the weekly build on
+# the AsteroidOS build server (Friday 00:00), and on demand. Pushing to
+# master needs a token with contents:write. The default GITHUB_TOKEN is
+# enough if master is not branch-protected; otherwise store a fine-grained
+# personal access token (or GitHub App token) as the AUTOBUMP_TOKEN secret.
+
+name: Update recipes
+
+on:
+  schedule:
+    - cron: '0 12 * * 4'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-recipes
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.AUTOBUMP_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "AsteroidOS bot"
+          git config user.email "bot@asteroidos.org"
+
+      - name: Bump SRCREVs
+        run: python3 scripts/update-asteroid-recipes
+
+      - name: Push
+        run: |
+          if [ "$(git rev-parse HEAD)" != "${{ github.sha }}" ]; then
+            git push
+          fi
